@@ -2,6 +2,9 @@
 
 Website: https://fai.cs.uni-saarland.de/hoffmann/metric-ff.html
 
+Original instructions:
+
+```
 This directory contains the C implementation of Metric-FF, as it was
 used in the 3rd international planning competition. Build the planner
 by typing
@@ -20,6 +23,7 @@ problem files.
 Have fun,
 
 Joerg Hoffmann
+```
 
 ## Pre-requisites
 
@@ -29,9 +33,10 @@ You will need Flex, Bison, make, and a C compiler (tested working with gcc and c
 
 On Windows, get Flex and Bison from: https://sourceforge.net/projects/winflexbison/files/latest/download
 and extract `win_flex.exe`, `win_bison.exe` and the `data/` folder into the current working directory.
-Then modify the
 
 You will also need `make`. This comes pre-installed on most Linux/Mac distributions, but needs special set-up on Windows. The easiest way to get it is to install [Chocolatey](https://chocolatey.org/install) and then install `make` via `choco install make`. Use [Git Bash](https://gitforwindows.org/) instead of CMD/PowerShell.
+
+Alternatively, if you use [MSYS2](https://www.msys2.org/) with MinGW for the GCC compiler, MSYS2 provides `make` along with many other unix utilities.
 
 ## Building
 
