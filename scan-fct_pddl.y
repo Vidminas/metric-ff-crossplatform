@@ -98,7 +98,7 @@ static char * serrmsg[] = {
 };
 
 
-/* void fcterr( int errno, char *par ); */
+void fcterr( int errno, char *par );
 
 
 static int sact_err;

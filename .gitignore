@@ -50,3 +50,12 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Flex and Bison data
+data/
+
+# Generated code
+lex.fct_pddl.c
+lex.ops_pddl.c
+scan-fct_pddl.tab.c
+scan-ops_pddl.tab.c

@@ -91,7 +91,7 @@ static char *serrmsg[] = {
 };
 
 
-/* void opserr( int errno, char *par ); */
+void opserr( int errno, char *par );
 
 
 static int sact_err;
