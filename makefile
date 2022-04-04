@@ -7,12 +7,18 @@
 TYPE	= 
 ADDONS	= 
 
-CC      = gcc
+CC      = clang
+CFLAGS	= -O3 -ansi $(TYPE) $(ADDONS) -g
 
-CFLAGS	= -O6 -ansi $(TYPE) $(ADDONS) -g
-# -g -pg
-
-LIBS    = -lm
+ifeq ($(OS), Windows_NT)
+	LIBS= 
+	FLEX=./win_flex --wincompat
+	BISON=./win_bison
+else
+	LIBS=-lm
+	FLEX=flex
+	BISON=bison
+endif
 
 
 ####### Files
@@ -37,7 +43,8 @@ SOURCES 	= main.c \
 	inst_hard.c \
 	inst_final.c \
 	relax.c \
-	search.c
+	search.c \
+	times.c
 
 OBJECTS 	= $(SOURCES:.c=.o)
 
@@ -57,16 +64,16 @@ ff: $(OBJECTS) $(PDDL_PARSER_OBJ)
 
 # pddl syntax
 scan-fct_pddl.tab.c: scan-fct_pddl.y lex.fct_pddl.c
-	bison -pfct_pddl -bscan-fct_pddl scan-fct_pddl.y
+	$(BISON) -pfct_pddl -bscan-fct_pddl scan-fct_pddl.y
 
 scan-ops_pddl.tab.c: scan-ops_pddl.y lex.ops_pddl.c
-	bison -pops_pddl -bscan-ops_pddl scan-ops_pddl.y
+	$(BISON) -pops_pddl -bscan-ops_pddl scan-ops_pddl.y
 
 lex.fct_pddl.c: lex-fct_pddl.l
-	flex -Pfct_pddl lex-fct_pddl.l
+	$(FLEX) -Pfct_pddl lex-fct_pddl.l
 
 lex.ops_pddl.c: lex-ops_pddl.l
-	flex -Pops_pddl lex-ops_pddl.l
+	$(FLEX) -Pops_pddl lex-ops_pddl.l
 
 
 # misc
