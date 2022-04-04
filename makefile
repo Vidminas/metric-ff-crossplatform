@@ -4,17 +4,16 @@
 
 ####### FLAGS
 
-TYPE	= 
-ADDONS	= 
-
 CC      = clang
-CFLAGS	= -O3 -ansi $(TYPE) $(ADDONS) -g
+CFLAGS	= -O3 -std=c89
 
 ifeq ($(OS), Windows_NT)
+	OUT_FILE=ff.exe
 	LIBS= 
 	FLEX=./win_flex --wincompat
 	BISON=./win_bison
 else
+	OUT_FILE=ff
 	LIBS=-lm
 	FLEX=flex
 	BISON=bison
@@ -31,7 +30,6 @@ PDDL_PARSER_SRC	= scan-fct_pddl.tab.c \
 
 PDDL_PARSER_OBJ = scan-fct_pddl.tab.o \
 	scan-ops_pddl.tab.o 
-
 
 SOURCES 	= main.c \
 	memory.c \
@@ -58,9 +56,8 @@ OBJECTS 	= $(SOURCES:.c=.o)
 
 ####### Build rules
 
-
 ff: $(OBJECTS) $(PDDL_PARSER_OBJ)
-	$(CC) -o ff $(OBJECTS) $(PDDL_PARSER_OBJ) $(CFLAGS) $(LIBS)
+	$(CC) -o $(OUT_FILE) $(OBJECTS) $(PDDL_PARSER_OBJ) $(CFLAGS) $(LIBS)
 
 # pddl syntax
 scan-fct_pddl.tab.c: scan-fct_pddl.y lex.fct_pddl.c
