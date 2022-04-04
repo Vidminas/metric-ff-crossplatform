@@ -1,8 +1,5 @@
 
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,34 +18,6 @@
  *********************************************************************/
 
 
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
-
-
-
-
-
-
 /*********************************************************************
  * File: relax.c
  * Description: this file handles the relaxed planning problem, i.e.,
@@ -60,7 +29,7 @@
  *              here: linear tasks +=,-=,:= / le / le <comp> le
  *
  *
- * Author: Joerg Hoffmann 2001
+ * Author: Joerg Hoffmann 2000--2002, 2011
  *
  *********************************************************************/ 
 
@@ -192,6 +161,24 @@ Bool LESS( int a, int b )
 
 
 
+Bool FLOAT_LE( float a, float b )
+
+{
+
+  if ( b == INFINITY ) {
+    return TRUE;
+  }
+
+  if ( a == INFINITY ) {
+    return FALSE;
+  }
+
+  return ( a <= b ? TRUE : FALSE );
+
+}
+
+
+
 
 
 
@@ -303,10 +290,62 @@ int get_1P_and_A( State *S )
     h = INFINITY;
   }
 
-  collect_A_info();
+  collect_1P_and_A_info();
   reset_fixpoint( max );
 
   return h;
+
+}
+
+
+
+void collect_1P_and_A_info( void )
+
+{
+
+  static Bool first_call = TRUE;
+
+  int i;
+
+  if ( first_call ) {
+    gA = ( int * ) calloc( gnum_op_conn, sizeof( int ) );
+    gnum_A = 0;
+    first_call = FALSE;
+  }
+
+  if ( gcmd_line.debug ) {
+    printf("\ncollect_1P_and_A_info");
+  }
+
+  for ( i = 0; i < gnum_A; i++ ) {
+    gop_conn[gA[i]].is_in_A = FALSE;
+  }
+  gnum_A = 0;
+
+  for ( i = 0; i < lnum_E; i++ ) {
+    if ( gef_conn[lE[i]].level != 0 ) break;
+    if ( gcmd_line.debug ) {
+      printf("\ngot applicable op: ");
+      print_op_name(gef_conn[lE[i]].op);
+    }
+    if ( gop_conn[gef_conn[lE[i]].op].is_in_A ) {
+      if ( gcmd_line.debug ) {
+	printf(" -- already in, skipping it!");
+      }
+      continue;
+    }
+    if ( gop_conn[gef_conn[lE[i]].op].axiom ) {
+      if ( gcmd_line.debug ) {
+	printf(" -- axiom, skipping it!");
+      }
+      continue;
+    }
+    if ( gcmd_line.debug ) {
+      printf(" -- adding it!");
+    }
+    gop_conn[gef_conn[lE[i]].op].is_in_A = TRUE;
+    gA[gnum_A++] = gef_conn[lE[i]].op;
+  }
 
 }
 
@@ -357,18 +396,124 @@ void collect_A_info( void )
     first_call = FALSE;
   }
 
+  if ( gcmd_line.debug ) {
+    printf("\ncollect_A_info");
+  }
+
   for ( i = 0; i < gnum_A; i++ ) {
     gop_conn[gA[i]].is_in_A = FALSE;
   }
   gnum_A = 0;
 
   for ( i = 0; i < lnum_E; i++ ) {
-    if ( gef_conn[lE[i]].level != 0 ) break;
+    /* levels are not set unless we actually build the RPG!
+/*     if ( gef_conn[lE[i]].level != 0 ) break; */
+    if ( gcmd_line.debug ) {
+      printf("\ngot applicable op: ");
+      print_op_name(gef_conn[lE[i]].op);
+    }
     if ( gop_conn[gef_conn[lE[i]].op].is_in_A ) {
+      if ( gcmd_line.debug ) {
+	printf(" -- already in, skipping it!");
+      }
       continue;
+    }
+    if ( gop_conn[gef_conn[lE[i]].op].axiom ) {
+      if ( gcmd_line.debug ) {
+	printf(" -- axiom, skipping it!");
+      }
+      continue;
+    }
+    if ( gcmd_line.debug ) {
+      printf(" -- adding it!");
     }
     gop_conn[gef_conn[lE[i]].op].is_in_A = TRUE;
     gA[gnum_A++] = gef_conn[lE[i]].op;
+  }
+
+}
+
+
+
+void get_A_axioms( State *S )
+
+{
+
+  int i;
+
+  initialize_fixpoint( S );
+  
+  for ( i = 0; i < lnum_F; i++ ) {
+    activate_ft( lF[i], 0 );
+  }
+  for ( i = 0; i < lnum_0P_E; i++ ) {
+    if ( gef_conn[l0P_E[i]].in_E ) {
+      continue;
+    }
+    new_ef( l0P_E[i] );
+  }
+  for ( i = 0; i < gnum_fl_conn; i++ ) {
+    activate_fl( i, 0 );
+  }
+
+  collect_A_axioms_info();
+
+  /* 0 should be enough here...
+   */
+  reset_fixpoint( 1 );
+
+}
+
+
+
+void collect_A_axioms_info( void )
+
+{
+
+  static Bool first_call = TRUE;
+
+  int i;
+
+  if ( first_call ) {
+    gA_axioms = ( int * ) calloc( gnum_op_conn, sizeof( int ) );
+    gnum_A_axioms = 0;
+    first_call = FALSE;
+  }
+
+  if ( gcmd_line.debug ) {
+    printf("\ncollect_A_axioms_info");
+  }
+
+  for ( i = 0; i < gnum_A_axioms; i++ ) {
+    gop_conn[gA_axioms[i]].is_in_A_axioms = FALSE;
+  }
+  gnum_A_axioms = 0;
+
+  for ( i = 0; i < lnum_E; i++ ) {
+    /* levels are not set unless we actually build the RPG!
+/*     if ( gef_conn[lE[i]].level != 0 ) break; */
+    if ( gcmd_line.debug ) {
+      printf("\ngot applicable op: ");
+      print_op_name(gef_conn[lE[i]].op);
+    }
+    if ( gop_conn[gef_conn[lE[i]].op].is_in_A_axioms ) {
+      if ( gcmd_line.debug ) {
+	printf(" -- already in, skipping it!");
+      }
+      continue;
+    }
+    if ( !gop_conn[gef_conn[lE[i]].op].axiom ) {
+      if ( gcmd_line.debug ) {
+	printf(" -- no axiom, skipping it!");
+      }
+      continue;
+    }
+    if ( gcmd_line.debug ) {
+      printf(" -- adding it!");
+    }
+
+    gop_conn[gef_conn[lE[i]].op].is_in_A_axioms = TRUE;
+    gA_axioms[gnum_A_axioms++] = gef_conn[lE[i]].op;
   }
 
 }
@@ -443,21 +588,28 @@ Bool build_fixpoint( State *S, int *max )
 {
 
   int start_ft, stop_ft, start_ef, stop_ef, i, time = 0;
+  float costlevel;
 
   initialize_fixpoint( S );
 
   start_ft = 0;
   start_ef = 0;
   while ( TRUE ) {
+    if ( gcmd_line.debug ) {
+      printf("\n======================================FP time %d", time);
+    }
+
     if ( all_goals_activated( time ) ) {
       break;
     }
-    if ( start_ft == lnum_F ) {
-      if ( fluents_hopeless( time ) ) {
-	/* fixpoint, goals not reached
-	 */
-	*max = time;
-	return FALSE;
+    if ( time > 0 || lnum_0P_E == 0 ) {
+      if ( start_ft == lnum_F ) {
+	if ( fluents_hopeless( time ) ) {
+	  /* fixpoint, goals not reached
+	   */
+	  *max = time;
+	  return FALSE;
+	}
       }
     }
     /* make space if necessary, and copy over
@@ -476,7 +628,22 @@ Bool build_fixpoint( State *S, int *max )
      * - if level 0 activate the no preconds-ops
      * - activate the fluents at their <time> level
      */
-    stop_ft = lnum_F;
+
+    if ( !gcost_rplans ) {
+      stop_ft = lnum_F;
+    } else {
+      /* first, find the latest index of facts whose cost 
+       * is the same as that of leading fact
+       */
+      costlevel = gft_conn[lF[start_ft]].RPGcost;
+      for ( i = start_ft; i < lnum_F; i++ ) {
+	if ( gft_conn[lF[i]].RPGcost > costlevel ) {
+	  break;
+	}
+      }
+      stop_ft = i;
+    }
+
     for ( i = start_ft; i < stop_ft; i++ ) {
       activate_ft( lF[i], time );
     }
@@ -645,6 +812,8 @@ void initialize_fixpoint( State *S )
     lnum_0P_E = 0;
     for ( i = 0; i < gnum_ef_conn; i++ ) {      
       gef_conn[i].level = INFINITY;    
+      gef_conn[i].RPGcost = INFINITY; 
+   
       gef_conn[i].in_E = FALSE;
       gef_conn[i].num_active_PCs = 0;
       gef_conn[i].ch = FALSE;
@@ -660,10 +829,13 @@ void initialize_fixpoint( State *S )
     }
     for ( i = 0; i < gnum_op_conn; i++ ) {      
       gop_conn[i].is_in_A = FALSE;
+      gop_conn[i].is_in_A_axioms = FALSE;
       gop_conn[i].is_in_H = FALSE;
     }
     for ( i = 0; i < gnum_ft_conn; i++ ) {
       gft_conn[i].level = INFINITY;
+      gft_conn[i].RPGcost = INFINITY;
+
       gft_conn[i].in_F = FALSE;
     }
     for ( i = 0; i < gnum_fl_conn; i++ ) {
@@ -671,6 +843,8 @@ void initialize_fixpoint( State *S )
     }
     first_call = FALSE;
   }
+
+  ghmax = -1;
 
   lnum_E = 0;
   lnum_ch_E = 0;
@@ -680,7 +854,7 @@ void initialize_fixpoint( State *S )
     if ( gft_conn[S->F[i]].in_F ) {
       continue;
     }
-    new_fact( S->F[i] );
+    new_fact( S->F[i], 0 );
   }
   /* only the real fls are ever in there
    */
@@ -790,6 +964,11 @@ void activate_ft( int index, int time )
 
   int i;
 
+  if ( gcmd_line.debug ) {
+    printf("\nactivate fact time %d: ", time);
+    print_ft_name(index);
+  }
+
   gft_conn[index].level = time;
 
   for ( i = 0; i < gft_conn[index].num_PC; i++ ) {
@@ -797,6 +976,15 @@ void activate_ft( int index, int time )
      */
     if ( gef_conn[gft_conn[index].PC[i]].illegal ) continue;
 
+    if ( gcmd_line.debug ) {
+      printf("\nincrementing activePC of ");
+      print_op_name(gef_conn[gft_conn[index].PC[i]].op);
+      printf(" from %d to %d; total: %d", 
+	     gef_conn[gft_conn[index].PC[i]].num_active_PCs,
+	     gef_conn[gft_conn[index].PC[i]].num_active_PCs+1,
+	     gef_conn[gft_conn[index].PC[i]].num_PC);
+    }
+    
     gef_conn[gft_conn[index].PC[i]].num_active_PCs++;
     if ( !gef_conn[gft_conn[index].PC[i]].ch ) {
       gef_conn[gft_conn[index].PC[i]].ch = TRUE;
@@ -806,6 +994,10 @@ void activate_ft( int index, int time )
 	 gef_conn[gft_conn[index].PC[i]].num_PC &&
 	 gef_conn[gft_conn[index].PC[i]].num_active_f_PCs ==
 	 gef_conn[gft_conn[index].PC[i]].num_f_PC ) {
+      if ( gcmd_line.debug ) {
+	printf("\ncalling new ef at time %d for ft ", time);
+	print_ft_name(index);
+      }
       new_ef( gft_conn[index].PC[i] );
     }
   }
@@ -854,6 +1046,10 @@ void activate_fl( int index, int time )
     }
     if ( gef_conn[ef].num_active_PCs == gef_conn[ef].num_PC &&
 	 gef_conn[ef].num_active_f_PCs == gef_conn[ef].num_f_PC ) {
+      if ( gcmd_line.debug ) {
+	printf("\ncalling new ef at time %d for fluent ", time);
+	print_fl_name(index);
+      }
       new_ef( ef );
     }
   }
@@ -869,10 +1065,10 @@ void activate_ef( int index, int time )
   int i, fl;
   float val;
 
-  if ( gef_conn[index].removed ) {
-    printf("\n\nactivating removed effect!!\n\n");
-    exit( 1 );
-  }
+/*   if ( gef_conn[index].removed ) { */
+/*     printf("\n\nactivating removed effect!!\n\n"); */
+/*     exit( 1 ); */
+/*   } */
   if ( gef_conn[index].illegal ) {
     printf("\n\nactivating illegal effect!!\n\n");
     exit( 1 );
@@ -880,11 +1076,26 @@ void activate_ef( int index, int time )
 
   gef_conn[index].level = time;
 
+  if ( gcmd_line.debug ) {
+    printf("\nactivate effect time %d: ", time);
+    print_op_name(gef_conn[index].op);
+    printf(" with own cost %f and RPGcost %f", 
+	   gop_conn[gef_conn[index].op].cost,
+	   gef_conn[index].RPGcost);
+   }
+
   for ( i = 0; i < gef_conn[index].num_A; i++ ) {
     if ( gft_conn[gef_conn[index].A[i]].in_F ) {
       continue;
     }
-    new_fact( gef_conn[index].A[i] );
+    if ( gcmd_line.debug ) {
+      printf("\ncalling new fact at time %d for op ", time);
+      print_op_name(gef_conn[index].op);
+      printf(" with own cost %f and RPGcost %f", 
+	     gop_conn[gef_conn[index].op].cost,
+	     gef_conn[index].RPGcost);
+    }
+    new_fact( gef_conn[index].A[i], gef_conn[index].RPGcost );
   }
 
   for ( i = 0; i < gef_conn[index].num_IN; i++ ) {
@@ -959,10 +1170,10 @@ void apply_ef( int index, int time )
   int i, fl;
   float val;
 
-  if ( gef_conn[index].removed ) {
-    printf("\n\napplying removed effect!!\n\n");
-    exit( 1 );
-  }
+/*   if ( gef_conn[index].removed ) { */
+/*     printf("\n\napplying removed effect!!\n\n"); */
+/*     exit( 1 ); */
+/*   } */
   if ( gef_conn[index].illegal ) {
     return;
   }
@@ -1015,12 +1226,62 @@ void apply_ef( int index, int time )
 
 
 
-void new_fact( int index )
+void new_fact( int index, float RPGcost )
 
 {
 
-  lF[lnum_F++] = index;
-  gft_conn[index].in_F = TRUE;
+  int i, j, N;
+
+  if ( gcmd_line.debug ) {
+    printf("\nnew fact cost %f: ", RPGcost);
+    print_ft_name(index);
+  }
+
+  if ( !gcost_rplans ) {
+    if ( gft_conn[index].in_F ) {
+      return;
+    }
+    lF[lnum_F++] = index;
+    gft_conn[index].in_F = TRUE;
+    return;
+  }
+
+  /* if the fact is already here, then we may decrease its cost
+   * and move it further to the front. thus, find its current position j
+   * and remember it as the "right end" N of the sequence to be considered.
+   */
+  if ( gft_conn[index].in_F ) {
+    if ( gft_conn[index].RPGcost <= RPGcost ) {
+      return;
+    }
+
+    for ( j = 0; j < lnum_F; j++ ) {
+      if ( lF[j] == index ) break;
+    }
+    if ( j == lnum_F ) {
+      printf("\n\nDEBUG ME: didn't find already *in* fact\n\n");
+      exit(1);
+    }
+    N = j;
+  } else {
+    gft_conn[index].in_F = TRUE;
+    N = lnum_F;
+    lnum_F++;
+  }
+
+  gft_conn[index].RPGcost = RPGcost;
+  /* find the position i where ft needs to be inserted
+   * IMPORTANT: insert new fact AFTER previous facts with
+   * same value. Otherwise, the old facts will end up within
+   * the part of the lF list to be activated in the next round 
+   */
+  for ( i = 0; i < N; i++ ) {
+    if ( RPGcost < gft_conn[lF[i]].RPGcost ) break;
+  }
+  for ( j = N; j > i; j-- ) {
+    lF[j] = lF[j-1];
+  }
+  lF[i] = index;
 
 }
 
@@ -1030,8 +1291,53 @@ void new_ef( int index )
 
 {
 
+  int i;
+  float max;
+
+  if ( gcmd_line.debug ) {
+    printf("\nnew effect for op ");
+    print_op_name(gef_conn[index].op);
+  }
+
+  if ( gef_conn[index].in_E ) {
+    printf("\n\nDEBUG ME: new effect already in\n");
+    exit(1);
+  }
+
   lE[lnum_E++] = index;
   gef_conn[index].in_E = TRUE;
+
+  if ( !gcost_rplans ) {
+    return;
+  }
+
+  max = 0;
+  if ( gcmd_line.debug ) {
+    printf("... precond costs: ");
+  }
+  for ( i = 0; i < gef_conn[index].num_PC; i++ ) {
+    if ( gft_conn[gef_conn[index].PC[i]].RPGcost < 0 ) {
+      printf("\n\nDEBUG ME: PC fact of new ef has cost %f? fact ", 
+	     gft_conn[gef_conn[index].PC[i]].RPGcost);
+      print_ft_name(gef_conn[index].PC[i]);
+      printf(" with level %d of op ", gft_conn[gef_conn[index].PC[i]].level); 
+      print_op_name(gef_conn[index].op);
+      printf("\n");
+      exit( 1 );
+    }
+    if ( gcmd_line.debug ) {
+      printf("%f, ", gft_conn[gef_conn[index].PC[i]].RPGcost);
+    }
+    if ( max < gft_conn[gef_conn[index].PC[i]].RPGcost ) {
+      max = gft_conn[gef_conn[index].PC[i]].RPGcost;
+    }
+  }
+  gef_conn[index].RPGcost = max + gop_conn[gef_conn[index].op].cost;
+    if ( gcmd_line.debug ) {
+      printf("own cost %f, total cost %f", 
+	     gop_conn[gef_conn[index].op].cost,
+	     gef_conn[index].RPGcost);
+    }
 
 }
 
@@ -1045,20 +1351,57 @@ void reset_fixpoint( int max )
 
   for ( i = 0; i < lnum_F; i++ ) {
     gft_conn[lF[i]].level = INFINITY;
+    gft_conn[lF[i]].RPGcost = INFINITY;
     gft_conn[lF[i]].in_F = FALSE;
+  }
+  if ( gcmd_line.debug ) {
+    for ( i = 0; i < gnum_ft_conn; i++ ) {
+      if ( gft_conn[i].level != INFINITY ) {
+	printf("\nDEBUG ME: ft level not properly reset\n");
+	exit( 1 );
+      } 
+      if ( gft_conn[i].RPGcost != INFINITY ) {
+	printf("\nDEBUG ME: ft RPGcost not properly reset\n");
+	exit( 1 );
+      } 
+      if ( gft_conn[i].in_F ) {
+	printf("\nDEBUG ME: ft in_F not properly reset\n");
+	exit( 1 );
+      } 
+    }
   }
 
   for ( i = 0; i < lnum_E; i++ ) {
     gef_conn[lE[i]].level = INFINITY;
+    gef_conn[lE[i]].RPGcost = INFINITY;
     gef_conn[lE[i]].in_E = FALSE;
   }
-
   for ( i = 0; i < lnum_ch_E; i++ ) {
     gef_conn[lch_E[i]].num_active_PCs = 0;
     gef_conn[lch_E[i]].num_active_f_PCs = 0;
     gef_conn[lch_E[i]].ch = FALSE;
   }
-
+  if ( gcmd_line.debug ) {
+    for ( i = 0; i < gnum_ef_conn; i++ ) {
+      if ( gef_conn[i].level != INFINITY ) {
+	printf("\nDEBUG ME: ef level not properly reset\n");
+	exit( 1 );
+      } 
+      if ( gef_conn[i].RPGcost != INFINITY ) {
+	printf("\nDEBUG ME: ef RPGcost not properly reset\n");
+	exit( 1 );
+      } 
+      if ( gef_conn[i].in_E ) {
+	printf("\nDEBUG ME: ef in_E not properly reset\n");
+	exit( 1 );
+      } 
+      if ( gef_conn[i].num_active_PCs != 0 ) {
+	printf("\nDEBUG ME: ef active PCs not properly reset\n");
+	exit( 1 );
+      } 
+    }
+  }
+    
   for ( i = 0; i < gnum_fl_conn; i++ ) {
     for ( j = 0; j <= max; j++ ) {
       gfl_conn[i].def[j] = FALSE;
@@ -1076,9 +1419,17 @@ Bool all_goals_activated( int time )
 
   int i;
 
+  if ( gcost_rplans ) {
+    ghmax = -1;
+  }
   for ( i = 0; i < gnum_flogic_goal; i++ ) {
     if ( !gft_conn[gflogic_goal[i]].in_F ) {
       return FALSE;
+    }
+    if ( gcost_rplans ) {
+      if ( ghmax == -1 || gft_conn[gflogic_goal[i]].RPGcost > ghmax ) {
+	ghmax = gft_conn[gflogic_goal[i]].RPGcost;
+      }
     }
   }
 
@@ -1150,6 +1501,9 @@ void print_fixpoint_result( void )
 	if ( gft_conn[i].level == time ) {
 	  printf("\n");
 	  print_ft_name( i );
+	  if ( gcost_rplans ) {
+	    printf(", cost %f", gft_conn[i].RPGcost);
+	  }
 	}
       }
     }
@@ -1173,12 +1527,17 @@ void print_fixpoint_result( void )
 	if ( gef_conn[i].level == time ) {
 	  printf("\neffect %d to ", i);
 	  print_op_name( gef_conn[i].op );
+	  if ( gcost_rplans ) {
+	    printf(", cost %f own op-cost %f", gef_conn[i].RPGcost, gop_conn[gef_conn[i].op].cost);
+	  }
 	}
       }
     }
 
     time++;
   }
+
+  printf("\n");
   fflush( stdout );
 
 }
@@ -1476,11 +1835,15 @@ int extract_1P( int max )
 
   max_goal_level = initialize_goals( max );
 
-  if ( gcmd_line.optimize && goptimization_established ) {
+  if ( gcost_minimizing ) {
     /* we are optimizing cost;
      * initialize global cost of the relaxed plan.
+     *
+     * NOTE that this is used for any cost-minimizing search,
+     * regardless of whether or not we also use cost-minimizing 
+     * rplans!!
      */
-    gcost = 0;
+    gh_cost = 0;
   }
 
   lh = 0;
@@ -1600,8 +1963,10 @@ void achieve_goals( int time )
 
 {
 
-  int i, j, k, ft, min_p, min_e, ef, p;
+  int i, j, k, ft, min_e, ef, min_p, p;
   float val;
+  float preRPGcost, min_preRPGcost;
+  int preRPGlevel, min_preRPGlevel, min_ownlevel;
 
   /* achieve the goals set at level time >= 1
    */
@@ -1691,11 +2056,6 @@ void achieve_goals( int time )
 	  lin_plan_E[lnum_in_plan_E++] = ef;
 	}
 	gef_conn[ef].in_plan = time - 1;
-	if ( gcmd_line.optimize && goptimization_established ) {
-	  /* we want to execute this effect here, so we gotta live with the cost.
-	   */
-	  gcost += gef_conn[ef].cost;
-	}
       }
       /* now select the resp. op at this level, if necessary
        */
@@ -1760,9 +2120,6 @@ void achieve_goals( int time )
 	  lin_plan_E[lnum_in_plan_E++] = ef;
 	}
 	gef_conn[ef].in_plan = time - 1;
-	if ( gcmd_line.optimize && goptimization_established ) {
-	  gcost += gef_conn[ef].cost;
-	}
       }
       /* do the usual stuff...
        */
@@ -1807,21 +2164,85 @@ void achieve_goals( int time )
       continue;
     }
 
-    min_p = INFINITY;
-    min_e = -1;
-    for ( j = 0; j < gft_conn[ft].num_A; j++ ) {
-      ef = gft_conn[ft].A[j];
-      if ( gef_conn[ef].level != time - 1 ) continue; 
-      p = 0;
-      for ( k = 0; k < gef_conn[ef].num_PC; k++ ) {
-	p += gft_conn[gef_conn[ef].PC[k]].level;
+    if ( gcmd_line.debug ) {
+      printf("\ngoal at level %d: ", time);
+      print_ft_name(ft);
+    }
+
+    if ( !gcost_rplans ) {
+      /* even in the non-cost-minimizing-rplans setting, 
+       * choose the actions by their cost!
+       * ... can only make the plan better...
+       */
+      min_preRPGcost = -1;
+      min_e = -1;
+      for ( j = 0; j < gft_conn[ft].num_A; j++ ) {
+	ef = gft_conn[ft].A[j];
+	if ( gef_conn[ef].level != time - 1 ) continue; 
+	preRPGcost = gef_conn[ef].RPGcost;
+	if ( min_preRPGcost == -1 || preRPGcost < min_preRPGcost ) {
+	  min_preRPGcost = preRPGcost;
+	  min_e = ef;
+	}
       }
-      if ( LESS( p, min_p ) ) {
-	min_p = p;
-	min_e = ef;
+    } else {
+      min_preRPGcost = -1;
+      min_preRPGlevel = -1;
+      min_e = -1;
+      for ( j = 0; j < gft_conn[ft].num_A; j++ ) {
+	ef = gft_conn[ft].A[j];
+	/* in the cost setting, the level of the first supporter
+	 * may actually be less than level-1... ! 
+	 * (may have several smaller cost levels in between)
+	 */
+	if ( gef_conn[ef].level == -1 || gef_conn[ef].level >= time ) continue; 
+	preRPGcost = gop_conn[gef_conn[ef].op].cost;
+	preRPGlevel = 0;
+	for ( k = 0; k < gef_conn[ef].num_PC; k++ ) {
+	  preRPGcost += gft_conn[gef_conn[ef].PC[k]].RPGcost;
+	  /* not sure if this is important once 0-cost actions are
+	   * derived preds... anyway: with 0-cost acts,
+	   * a fact may be acheievd in ini state and still have same cost
+	   * as one that must be achieved still... hence prefer lower
+	   * facts (also lower actions, see below...)
+	   */
+	  preRPGlevel += gft_conn[gef_conn[ef].PC[k]].level;
+	}
+
+	if ( gcmd_line.debug ) {
+	  printf("\npossible achiever: ");
+	  print_op_name(gef_conn[ef].op);
+	  printf(" RPGcost: %f, own op-cost: %f, own level: %d, RPGlevel: %d", 
+		 preRPGcost, gop_conn[gef_conn[ef].op].cost, gef_conn[ef].level, preRPGlevel);
+	}
+	if ( min_preRPGcost == -1 || preRPGcost < min_preRPGcost ) {
+	  if ( gcmd_line.debug ) {
+	    printf("\nTake-first!");
+	  }
+	  min_preRPGcost = preRPGcost;
+	  min_preRPGlevel = preRPGlevel;
+	  min_ownlevel = gef_conn[ef].level;
+	  min_e = ef;
+	  continue;
+	}
+	if ( preRPGcost == min_preRPGcost && 
+	     (preRPGlevel < min_preRPGlevel || min_ownlevel > gef_conn[ef].level) ) {
+	  if ( gcmd_line.debug ) {
+	    printf("\nTake-later!");
+	  }
+	  min_preRPGcost = preRPGcost;
+	  min_preRPGlevel = preRPGlevel;
+	  min_e = ef;
+	}
       }
     }
     ef = min_e;
+
+    if ( min_e == -1 ) {
+      printf("\nDEBUG ME: no supporting effect found\n");
+      exit( 1 );
+    }
+
     /* if ef is already selected, we can not use it anymore;
      * else, record it as selected.
      *
@@ -1836,9 +2257,6 @@ void achieve_goals( int time )
 	lin_plan_E[lnum_in_plan_E++] = ef;
       }
       gef_conn[ef].in_plan = time - 1;
-      if ( gcmd_line.optimize && goptimization_established ) {
-	gcost += gef_conn[ef].cost;
-      }
     }
     select_op( time, gef_conn[ef].op );
     introduce_benefits_and_enforcements( time, ef );
@@ -1884,7 +2302,20 @@ void select_op( int time, int op )
       lused_O[lnum_used_O++] = op;
     }
     gop_conn[op].is_used = time - 1;
-    lh++;
+    /* do NOT count axiom-ops into the heuristic value!
+     */
+    if ( !gop_conn[op].axiom ) {
+      lh++;
+      /* this is where the cost-to-goal heuristic is computed!
+       *
+       * NOTE that this is used for any cost-minimizing search,
+       * regardless of whether or not we also use cost-minimizing 
+       * rplans!!
+       */
+      if ( gcost_minimizing ) {
+	gh_cost += gop_conn[op].cost;
+      }
+    }
     if ( gcmd_line.display_info == 127 ) {
       printf("\n                       ");
       print_op_name( op );
@@ -1951,9 +2382,6 @@ void introduce_benefits_and_enforcements( int time, int ef )
 	lin_plan_E[lnum_in_plan_E++] = gef_conn[ef].I[k];
       }
       gef_conn[gef_conn[ef].I[k]].in_plan = time - 1;
-      if ( gcmd_line.optimize && goptimization_established ) {
-	gcost += gef_conn[gef_conn[ef].I[k]].cost;
-      }
     }
     for ( l = 0; l < gef_conn[gef_conn[ef].I[k]].num_A; l++ ) {
       ft = gef_conn[gef_conn[ef].I[k]].A[l];
@@ -2221,6 +2649,10 @@ void collect_H_info( void )
       if ( gop_conn[op].is_in_H ) {
 	continue;
       }
+      if ( gop_conn[op].axiom ) {
+	continue;
+      }
+
       gop_conn[op].is_in_H = TRUE;
       gH[gnum_H++] = op;
     }

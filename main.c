@@ -1,9 +1,4 @@
-
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,33 +16,14 @@
  * 
  *********************************************************************/
 
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
-
 /*********************************************************************
  * File: main.c
  * Description: The main routine for the Metric-FastForward Planner.
+ *              Modified July 2011 to allow more command-line search 
+ *              confiogurations, including improved cost-minimization
  *
- * Author: Joerg Hoffmann 2001 / 2002
+ * Author: original version Joerg Hoffmann 2001/2002
+ *         modified version Joerg Hoffmann 2012
  * 
  *********************************************************************/ 
 
@@ -251,10 +227,12 @@ int gnum_constants = 0;
 Token gtype_names[MAX_TYPES];
 int gtype_consts[MAX_TYPES][MAX_TYPE];
 Bool gis_member[MAX_CONSTANTS][MAX_TYPES];
+int gmember_nr[MAX_CONSTANTS][MAX_TYPES];/* nr of object within a type */
 int gtype_size[MAX_TYPES];
 int gnum_types = 0;
 Token gpredicates[MAX_PREDICATES];
 int garity[MAX_PREDICATES];
+Bool gaxiom_added[MAX_PREDICATES];
 int gpredicates_args_type[MAX_PREDICATES][MAX_ARITY];
 int gnum_predicates = 0;
 Token gfunctions[MAX_FUNCTIONS];
@@ -502,8 +480,10 @@ float *gfnumeric_goal_direct_c = NULL;
 
 /* applicable actions
  */
-int *gA;
+int *gA;/* non-axioms */
 int gnum_A;
+int *gA_axioms; /* axioms */
+int gnum_A_axioms;
 
 
 
@@ -512,9 +492,12 @@ int gnum_A;
  */
 int *gH;
 int gnum_H;
-/* cost of relaxed plan
+/* added cost of relaxed plan
  */
-float gcost;
+float gh_cost;
+/* hmax value
+ */
+float ghmax;
 
 
 
@@ -568,6 +551,46 @@ Bool gconditional_effects;
 
 
 
+/* easier to question: are we optimizing or no?
+ */
+Bool gcost_minimizing;
+
+
+
+/* stores current A* weight: this is initially given by user,
+ * but changes during anytime search.
+ */
+float gw;
+/* this is the minimum weight, ie we'll stop once the weight update
+ * does/would yield a value <= this.
+ * if no such minim weight is given, this will be -1
+ */
+float gmin_w = -1;
+
+
+
+/* this one says whether or not we are actually using
+ * cost-minimizing rplans.
+ * this will be the case by default if we're running cost-
+ * minimizing searches. it can be switched off by a flag;
+ * it is automatically switched off in case there are
+ * numeric preconditions/goals: for this case,
+ * cost-minimizing rplans are not implemented (a numeric prec
+ * may cause an action to come in "later" on in the RPG although
+ * its logical pres are easy. in that case, any new effects will
+ * have a smaller RPGcost value than facts we already have waiting.
+ * in other words, the "Dijsktra" nature breaks.
+ *
+ * ... I suppose there may be a generic solution to this that
+ * can handle numeric precs/goals. Doesn't seem important enough
+ * to bother.
+ */
+Bool gcost_rplans;
+
+
+
+
+
 
 
 
@@ -613,7 +636,6 @@ struct tms lstart, lend;
 
 
 
-Bool lfound_plan;
 
 
 int main( int argc, char *argv[] )
@@ -630,11 +652,31 @@ int main( int argc, char *argv[] )
   struct tms start, end;
 
   Bool found_plan;
+  int i;
+  float cost;
+
+  Bool prev_gcost_rplans;
+
+
 
   times ( &lstart );
 
   /* command line treatment
    */
+  gcmd_line.display_info = 1;
+  gcmd_line.debug = 0;
+
+  /* search settings
+   */
+  gcmd_line.search_config = 5;
+  gcmd_line.cost_rplans = TRUE;
+  gcmd_line.w = 5;
+  gcmd_line.cost_bound = -1;
+  
+  memset(gcmd_line.ops_file_name, 0, MAX_LENGTH);
+  memset(gcmd_line.fct_file_name, 0, MAX_LENGTH);
+  memset(gcmd_line.path, 0, MAX_LENGTH);
+
   if ( argc == 1 || ( argc == 2 && *++argv[0] == '?' ) ) {
     ff_usage();
     exit( 1 );
@@ -809,40 +851,169 @@ int main( int argc, char *argv[] )
 
   if ( gcmd_line.display_info ) {
     printf("\n\nff: search configuration is ");
-    if ( gcmd_line.ehc ) {
-      printf("EHC, if that fails then ");
+    switch ( gcmd_line.search_config ) {
+    case 0:
+      printf("Enforced Hill-Climbing, if that fails then best-first search.\nMetric is plan length.");
+      printf("\nNO COST MINIMIZATION");
+      if ( !gcost_rplans ) {
+	printf(" (and no cost-minimizing relaxed plans).");
+      } else {
+	printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
+	exit( 1 );
+      }
+      break;
+    case 1:
+      printf("best-first search.\nMetric is plan length.");
+      printf("\nNO COST MINIMIZATION");
+      if ( !gcost_rplans ) {
+	printf(" (and no cost-minimizing relaxed plans).");
+      } else {
+	printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
+	exit( 1 );
+      }
+      break;
+    case 2:
+      printf("best-first search with helpful actions pruning.\nMetric is plan length.");
+      printf("\nNO COST MINIMIZATION.");
+      if ( !gcost_rplans ) {
+	printf(" (and no cost-minimizing relaxed plans).");
+      } else {
+	printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
+	exit( 1 );
+      }
+      break;
+    case 3:
+      printf("weighted A* with weight %d.", gcmd_line.w);
+      if ( goptimization_established ) {
+	printf("\nMetric is ");
+	print_LnfExpNode( &glnf_metric );
+      } else {
+	printf(" plan length");
+      }
+      printf("\nCOST MINIMIZATION DONE");
+      if ( !gcost_rplans ) {
+	printf(" (WITHOUT cost-minimizing relaxed plans).");
+      } else {
+	printf(" (WITH cost-minimizing relaxed plans).");
+      }
+      break;
+    case 4:
+      printf("A*epsilon with weight %d.", gcmd_line.w);
+      if ( goptimization_established ) {
+	printf("\nMetric is ");
+	print_LnfExpNode( &glnf_metric );
+      } else {
+	printf("\nError! Optimization criterion not established.\nA*epsilon not defined.\n\n");
+	exit( 1 );
+      }
+      printf("\nCOST MINIMIZATION DONE");
+      if ( !gcost_rplans ) {
+	printf(" (WITHOUT cost-minimizing relaxed plans).");
+      } else {
+	printf(" (WITH cost-minimizing relaxed plans).");
+      }
+      break;
+    case 5:
+      printf("Enforced Hill-Climbing, then A*epsilon with weight %d.", gcmd_line.w);
+      if ( goptimization_established ) {
+	printf("\nMetric is ");
+	print_LnfExpNode( &glnf_metric );
+      } else {
+	printf("\nError! Optimization criterion not established.\nA*epsilon not defined.\n\n");
+	exit( 1 );
+      }
+      printf("\nCOST MINIMIZATION DONE");
+      if ( !gcost_rplans ) {
+	printf(" (WITHOUT cost-minimizing relaxed plans).");
+      } else {
+	printf(" (WITH cost-minimizing relaxed plans).");
+      }
+      break;
+    default:
+      printf("\n\nUnknown search configuration: %d\n\n", gcmd_line.search_config );
+      exit( 1 );
     }
-    printf(" best-first on %d*g(s) + %d*h(s) where\n    metric is ",
-	   gcmd_line.g_weight, gcmd_line.h_weight);
-    if ( gcmd_line.optimize && goptimization_established ) {
-      print_LnfExpNode( &glnf_metric );
-    } else {
-      printf(" plan length");
+  } else {
+    if ( gcmd_line.search_config == 4 && !goptimization_established ) {
+      exit( 1 );
     }
   }
 
+
   times( &start );
 
-  if ( gcmd_line.ehc ) {
+
+
+  /* need to evaluate derived predicates in initial state!
+   */
+  do_axiom_update( &ginitial_state );
+
+
+  if ( !gcost_rplans ) {
+    gcmd_line.cost_bound = -1;
+  }
+
+  switch ( gcmd_line.search_config ) {
+  case 0:
     found_plan = do_enforced_hill_climbing();
-    
-    if ( !found_plan ) {
-      printf("\n\nEnforced Hill-climbing failed !");
-      printf("\nswitching to Best-first Search now.\n");
-      found_plan = do_best_first_search();
+    if ( found_plan ) {
+      if ( gcmd_line.display_info ) {
+	print_plan();
+      }
+    } else {
+      if ( gcmd_line.display_info ) {
+	printf("\n\nEnforced Hill-climbing failed !");
+	printf("\nswitching to Best-first Search now.\n");
+      }
+      do_best_first_search();
     }
-  } else {
-    found_plan = do_best_first_search();
+    break;
+  case 1:
+  case 2:
+    do_best_first_search();
+    break;
+  case 3:
+    do_weighted_Astar();
+    break;
+  case 4:
+    do_Astar_epsilon();
+    break;
+  case 5:
+    /* gcost_rplans controls whether or not we compute cost-minimal relaxed plans
+     * gcost_minimizing is only used in h fn to decide whether or not we
+     * need to count the weights of the operators in the relaxed plan.
+     *
+     * gcost_rplans may be false even for search options 3,4,5, namely if there are
+     * numeric preconditions/goals which make this relaxed plan variant invalid.
+     * hence we need to remember, when switching it off for EHC, whether or not
+     * it was previously on.
+     */
+    prev_gcost_rplans = gcost_rplans;
+    gcost_rplans = FALSE;
+    gcost_minimizing = FALSE;
+    found_plan = do_enforced_hill_climbing();
+    if ( found_plan ) {
+      print_plan();
+    } else {
+      if ( gcmd_line.display_info ) {
+	printf("\n\nEnforced Hill-climbing not successful.");
+	printf("\nSwitching to A*epsilon now.");
+      }
+      gcost_rplans = prev_gcost_rplans;
+      gcost_minimizing = TRUE;
+      do_Astar_epsilon();
+    }
+    break;
+  default:
+    printf("\n\nUnknown search configuration: %d\n\n", gcmd_line.search_config );
+    exit( 1 );
   }
 
   times( &end );
   TIME( gsearch_time );
 
-  if ( found_plan ) {
-    print_plan();
-  }
 
-  lfound_plan = found_plan;
+
   output_planner_info();
 
   printf("\n\n");
@@ -909,18 +1080,24 @@ void ff_usage( void )
   printf("\nusage of ff:\n");
 
   printf("\nOPTIONS   DESCRIPTIONS\n\n");
-  printf("-p <str>    path for operator and fact file\n");
-  printf("-o <str>    operator file name\n");
-  printf("-f <str>    fact file name\n\n");
+  printf("-p <str>    Path for operator and fact file\n");
+  printf("-o <str>    Operator file name\n");
+  printf("-f <str>    Fact file name\n\n");
 
-  printf("-E          don't do enforced hill-climbing try before bestfirst\n\n");
+  printf("-r <int>    Random seed [used for random restarts; preset: 0]\n\n");
 
-  printf("-g <num>    set weight w_g in w_g*g(s) + w_h*h(s) [preset: %d]\n",
-	 gcmd_line.g_weight);
-  printf("-h <num>    set weight w_h in w_g*g(s) + w_h*h(s) [preset: %d]\n\n",
-	 gcmd_line.h_weight);
+  printf("-s <int>    Search configuration [preset: s=5]; '+H': helpful actions pruning\n");
+  printf("      0     Standard-FF: EHC+H then BFS (cost minimization: NO)\n");
+  printf("      1     BFS (cost minimization: NO)\n");
+  printf("      2     BFS+H (cost minimization: NO)\n");
+  printf("      3     Weighted A* (cost minimization: YES)\n");
+  printf("      4     A*epsilon (cost minimization: YES)\n");
+  printf("      5     EHC+H then A*epsilon (cost minimization: YES)\n");
+  printf("-w <num>    Set weight w for search configs 3,4,5 [preset: w=5]\n\n");
 
-  printf("-O          switch on optimization expression (default is plan length)\n\n");
+  printf("-C          Do NOT use cost-minimizing relaxed plans for options 3,4,5\n\n");
+
+  printf("-b <float>  Fixed upper bound on solution cost (prune based on g+hmax); active only with cost minimization\n\n");
 
   if ( 0 ) {
     printf("-i <num>    run-time information level( preset: 1 )\n");
@@ -955,23 +1132,6 @@ void ff_usage( void )
     printf("    127     1P extracted on each evaluated state\n");
     printf("    128     H set collected for each evaluated state\n");
     
-    
-    /*    printf("    125     False sets of goals <GAM>\n"); */
-    /*    printf("    126     detected ordering constraints leq_h <GAM>\n"); */
-    /*    printf("    127     the Goal Agenda <GAM>\n"); */
-    
-    
-    
-    /*   printf("    109     reachability analysis results\n"); */
-    /*   printf("    110     final domain representation\n"); */
-    /*   printf("    111     connectivity graph\n"); */
-    /*   printf("    112     False sets of goals <GAM>\n"); */
-    /*   printf("    113     detected ordering constraints leq_h <GAM>\n"); */
-    /*   printf("    114     the Goal Agenda <GAM>\n"); */
-    /*   printf("    115     fixpoint result on each evaluated state <1Ph>\n"); */
-    /*   printf("    116     1P extracted on each evaluated state <1Ph>\n"); */
-    /*   printf("    117     H set collected for each evaluated state <1Ph>\n"); */
-    
     printf("\n-d <num>    switch on debugging\n\n");
   }
 
@@ -985,34 +1145,22 @@ Bool process_command_line( int argc, char *argv[] )
 
   char option;
 
-  gcmd_line.display_info = 1;
-  gcmd_line.debug = 0;
-
-  gcmd_line.ehc = TRUE;
-  gcmd_line.optimize = FALSE;
-
-  /* default: greedy best first search.
-   */
-  gcmd_line.g_weight = 1;
-  gcmd_line.h_weight = 5;
-  
-  memset(gcmd_line.ops_file_name, 0, MAX_LENGTH);
-  memset(gcmd_line.fct_file_name, 0, MAX_LENGTH);
-  memset(gcmd_line.path, 0, MAX_LENGTH);
-
   while ( --argc && ++argv ) {
     if ( *argv[0] != '-' || strlen(*argv) != 2 ) {
       return FALSE;
     }
     option = *++argv[0];
     switch ( option ) {
-    case 'E':
-      gcmd_line.ehc = FALSE;
+/*     case 'E': */
+/*       gcmd_line.ehc = FALSE; */
+/*       break; */
+/*     case 'O': */
+/*       gcmd_line.optimize = TRUE; */
+/*       gcmd_line.ehc = FALSE; */
+/*       break;       */
+    case 'C':
+      gcmd_line.cost_rplans = FALSE;
       break;
-    case 'O':
-      gcmd_line.optimize = TRUE;
-      gcmd_line.ehc = FALSE;
-      break;      
     default:
       if ( --argc && ++argv ) {
 	switch ( option ) {
@@ -1031,11 +1179,14 @@ Bool process_command_line( int argc, char *argv[] )
 	case 'd':
 	  sscanf( *argv, "%d", &gcmd_line.debug );
 	  break;
-	case 'g':
-	  sscanf( *argv, "%d", &gcmd_line.g_weight );
+	case 's':
+	  sscanf( *argv, "%d", &gcmd_line.search_config );
 	  break;
-	case 'h':
-	  sscanf( *argv, "%d", &gcmd_line.h_weight );
+	case 'w':
+	  sscanf( *argv, "%d", &gcmd_line.w );
+	  break;
+	case 'b':
+	  sscanf( *argv, "%f", &gcmd_line.cost_bound );
 	  break;
 	default:
 	  printf( "\nff: unknown option: %c entered\n\n", option );
@@ -1047,9 +1198,29 @@ Bool process_command_line( int argc, char *argv[] )
     }
   }
 
-  if ( gcmd_line.ehc &&
-       gcmd_line.optimize ) {
-    printf("\n\nff: no enforced hill-climbing when optimizing expressions.\n\n");
+  if ( 0 > gcmd_line.search_config || gcmd_line.search_config > 5 ) {
+    printf("\n\nff: unknown search configuration %d.\n\n", 
+	   gcmd_line.search_config);
+    return FALSE;
+  }
+
+  if ( gcmd_line.search_config <= 2 ) {
+    gcost_minimizing = FALSE;
+    gcost_rplans = FALSE;
+  } else {
+    gcost_minimizing = TRUE;
+    gcost_rplans = TRUE;
+  }
+
+  gw = gcmd_line.w;
+
+  if ( !gcmd_line.cost_rplans ) {
+    gcost_rplans = FALSE;
+  }
+
+  if ( gcmd_line.cost_bound != -1 && gcmd_line.cost_bound < 0 ) {
+    printf("\n\nff: invalid cost bound %f; must be >= 0.\n\n", 
+	   gcmd_line.cost_bound);
     return FALSE;
   }
 

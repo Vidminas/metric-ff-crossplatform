@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,30 +15,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  *********************************************************************/
-
-
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
 
 
 
@@ -233,7 +205,7 @@ Bool transform_to_LNF( void )
    * could be established.
    */
   if ( setup_effect_costs() ) {
-    if ( gcmd_line.display_info ) {
+    if ( gcmd_line.display_info > 1 ) {
       printf("\nmetric established (normalized to minimize): ");
       print_LnfExpNode( &glnf_metric );
     }
@@ -1228,10 +1200,9 @@ void translate_subtractions( void )
 	printf("\n\nnon-relevant fluent in non-illegal part!\n\n");
 	exit( 1 );
       } else {
-	printf("\n\ntotal-time occurs negatively in metric! sorry, but I'm skipping that rubbish\n\n");
+	printf("\n\nwarning: total-time occurs negatively in metric. no optimization done.\n\n");
 	glnf_metric.num_pF = 0;
 	glnf_metric.num_nF = 0;
-	gcmd_line.optimize = FALSE;
 	continue;
       }
     }
@@ -1304,7 +1275,10 @@ Bool ex_fl_in_nF_of_pre_cond_eff_goal( int *fl )
     }
   }
 
-  if ( gcmd_line.optimize && glnf_metric.num_nF > 0 ) {
+  /* no need to throw costs away, even if we're not explicitly asked to 
+   * minimize them
+   */
+  if ( (1 || gcost_minimizing) && glnf_metric.num_nF > 0 ) {
     *fl = glnf_metric.nF[0];
     return TRUE;
   }
@@ -2311,14 +2285,23 @@ Bool setup_effect_costs( void )
     /* no metric, or previously failed
      */
     if ( gcmd_line.display_info ) {
-      printf("\nno metric specified. plan length assumed.");
+      printf("\nno metric specified.");
     }
     return FALSE;
   }
 
   /* also in here: check if all parts of metric are defined
    * if not, then they won't ever be because we do not allow
-   * assigners anyway. also, setup gtt total-time multipl.
+   * assigners anyway. 
+   *
+   * also, setup gtt total-time multipl. 
+   * currently needed since in h fn effect cists are summed up
+   * --> may count the same action more than once, if we insert the
+   * timing cost into the effect cost.
+   *
+   * ... this is AWKWARD... probably would be better to simply 
+   * associate costs always (including relaxed plans)
+   * only with ACTIONS!
    */
   gtt = 0;
   for ( i = 0; i < glnf_metric.num_pF; i++ ) {
@@ -2330,7 +2313,7 @@ Bool setup_effect_costs( void )
   }
   if ( i < glnf_metric.num_pF ) {
     if ( gcmd_line.display_info ) {
-      printf("\nwarning: metric undefined initially. replaced with plan length (no assigners allowed anyway).");
+      printf("\nwarning: metric undefined initially. no optimization done.");
     }
     return FALSE;
   }
@@ -2354,19 +2337,19 @@ Bool setup_effect_costs( void )
 
 	if ( e->lnf_effects_rh[j]->num_pF > 0 ) {
 	  if ( gcmd_line.display_info ) {
-	    printf("\nwarning: non-constant effect on metric. metric replaced with plan length.");
+	    printf("\nwarning: non-constant effect on metric. no optimization done.");
 	  }
 	  return FALSE;
 	}
 	if ( e->lnf_effects_neft[j] != INCREASE ) {
 	  if ( gcmd_line.display_info ) {
-	    printf("\nwarning: assign on metric. metric replaced with plan length.");
+	    printf("\nwarning: assign on metric. no optimization done.");
 	  }
 	  return FALSE;
 	}
 	if ( e->lnf_effects_rh[j]->c < 0 ) {
 	  if ( gcmd_line.display_info ) {
-	    printf("\nwarning: change on metric in wrong direction. metric replaced with plan length.");
+	    printf("\nwarning: change on metric in wrong direction. no optimization done.");
 	  }
 	  return FALSE;
 	}
@@ -2382,7 +2365,7 @@ Bool setup_effect_costs( void )
   if ( !non_zero ) {
     if ( gtt == 0 ) {
       if ( gcmd_line.display_info ) {
-	printf("\nwarning: trivial metric, all costs 0. metric replaced with plan length.");
+	printf("\nwarning: trivial metric, all costs 0. no optimization done.");
       }
       return FALSE;
     }
@@ -2451,7 +2434,7 @@ void check_assigncycles( void )
     gTassign_influence[i] = ( Bool * ) calloc( gnum_real_fl_conn, sizeof( Bool ) );
   }
 
-  if ( gcmd_line.display_info ) {
+  if ( gcmd_line.display_info > 1 ) {
     printf("\n\nchecking for cyclic := effects");
   }
   for ( i = 0; i < gnum_real_fl_conn; i++ ) {
@@ -2483,10 +2466,12 @@ void check_assigncycles( void )
   }
   if ( c > 0 ) {
     printf("\nexit. (mneed computation not possible, RPG termination unclear)");
-    printf("\n(questions to Joerg Hoffmann: hoffmann@mpi-sb.mpg.de)\n\n");
+    printf("\n                (questions to Joerg Hoffmann)\n\n");
     exit( 1 );
   } else {
-    printf(" --- OK.");
+    if ( gcmd_line.display_info > 1 ) {
+      printf(" --- OK.");
+    }
   }
 
 }

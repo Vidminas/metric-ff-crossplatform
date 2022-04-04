@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,33 +16,15 @@
  * 
  *********************************************************************/
 
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
 /*********************************************************************
  * File: ff.h
  * Description: Types and structures for the Metric-FastForward planner.
+ *              Enhanced version with derived predicates and A*-epsilon
  *
  *        --------- PDDL2.1 level 2 :: VERSION  v 1.0 --------------
  *
- * Author: Joerg Hoffmann 2001
- * Contact: hoffmann@informatik.uni-freiburg.de
+ * Author: Joerg Hoffmann 2012
+ * Contact: hoffmann@cs.uni-saarland.de
  *
  *********************************************************************/ 
 
@@ -67,7 +45,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/timeb.h>
@@ -236,7 +214,7 @@
 #define MAX_TYPE 2000
 
 
-#define MAX_OPERATORS 50
+#define MAX_OPERATORS 50000
 
 
 /* in DNF: AND with OR - sons - collect 'hitting set':
@@ -251,7 +229,7 @@
 #define MAX_TYPE_INTERSECTIONS 10
 
 
-#define MAX_RELEVANT_FACTS 100000
+#define MAX_RELEVANT_FACTS 150000
 #define MAX_RELEVANT_FLUENTS 1000
 
 
@@ -271,8 +249,7 @@
 #define MAX_STATE 800
 
 
-#define MAX_PLAN_LENGTH 5000
-
+#define MAX_PLAN_LENGTH 500
 
 
 
@@ -381,11 +358,12 @@ struct _command_line {
   int display_info;
   int debug;
 
-  Bool optimize;
-  Bool ehc;
+  int search_config;
+  Bool cost_rplans;
 
-  int g_weight;
-  int h_weight;
+  int w;
+
+  float cost_bound;
 
 };
 
@@ -587,6 +565,7 @@ typedef struct _PlNode {
 typedef struct _PlOperator {
 
   char *name;
+  Bool axiom;
 
   /* only important for PDDL where :VARS may be added to the param list
    * which must be hidden when writing the plan to an output file
@@ -818,6 +797,7 @@ typedef struct _Operator {
 
   char *name, *var_names[MAX_VARS];
   int number_of_real_params; 
+  Bool axiom;
 
   int num_vars, var_types[MAX_VARS];
   Bool removed[MAX_VARS];
@@ -1086,6 +1066,7 @@ typedef struct _Action {
 
   NormOperator *norm_operator;
   PseudoAction *pseudo_action;
+  Bool axiom;
 
   char *name;
   int num_name_vars;
@@ -1147,6 +1128,7 @@ typedef struct _OpConn {
   /* to get name
    */
   Action *action;
+  Bool axiom;
 
   /* effects
    */
@@ -1156,11 +1138,21 @@ typedef struct _OpConn {
   /* member for applicable actions extraction
    */
   Bool is_in_A;
+  Bool is_in_A_axioms;
 
   /* members for 1Ph - H(S) extraction
    */
   int is_used;
   Bool is_in_H;
+
+  /* this is a bit imprecise since actually, in this 
+   * framework here, the cost of the action may depend on
+   * which conditional effects actually apply.
+   * ... anyway, this makes things much easier for the case
+   * where there aren't any effect conditions. all cost handling
+   * is now based on this..!!
+   */
+  float cost;
 
 } OpConn;
 
@@ -1231,7 +1223,9 @@ typedef struct _EfConn {
 
   /* members for relaxed fixpoint computation
    */
-  int level;
+  int level;/* first "cost level" where ef appears */
+  float RPGcost;/* max_{p prec} cost(p)+cost(op(ef)) */
+
   Bool in_E;
   int num_active_PCs;
   Bool ch;
@@ -1271,7 +1265,8 @@ typedef struct _FtConn {
 
   /* members for relaxed fixpoint computation
    */
-  int level;
+  int level;/* first "cost level" where ft appears */
+  float RPGcost;/* min_{e adder} cost(e) */
   Bool in_F;
 
   /* members for 1Ph extraction
@@ -1283,6 +1278,12 @@ typedef struct _FtConn {
   /* search
    */
   int rand;/* for hashing */
+
+  /* is this the effect of an axiom?
+   * needed to quickly filter out derived facts, in state 
+   * transitions!
+   */
+  Bool axiom_added;
 
 } FtConn;
 
@@ -1432,20 +1433,32 @@ typedef struct _PlanHashEntry {
 typedef struct _BfsNode {
   
   State S;
-
   int op;
-  int g;
 
-  /* h is plain heuristic relaxed plan steps (needed for goal state recognition)
-   * int_fn is optimized function value in plansteps case
-   * float_fn is optimized function value in expression case
+  /* number of steps from ini state to here
    */
-  int h;
-  int int_fn;
-  float float_fn;
+  int ini_distance;
 
-  int *H;
-  int num_H;
+  /* number of steps in relaxed plan for this state
+   */
+  int goal_distance;
+
+  /* g-value and h-value, ie summed-up cost to here, 
+   * summed-up cost in rplan for here.
+   * used in all optimization configs
+   */
+  float g;
+  float h;
+
+  /* f-value. in weighted A*, f=g+w*h; in A*epsilon, f=g+h
+   */
+  float f;
+
+  /* The applicable actions -- may be only the helpful ones,
+   * in case helpful actions are used!
+   */
+  int *A;
+  int num_A;
 
   struct _BfsNode *father;
 
@@ -1684,10 +1697,12 @@ extern int gnum_constants;
 extern Token gtype_names[MAX_TYPES];
 extern int gtype_consts[MAX_TYPES][MAX_TYPE];
 extern Bool gis_member[MAX_CONSTANTS][MAX_TYPES];
+extern int gmember_nr[MAX_CONSTANTS][MAX_TYPES];/* nr of object within a type */
 extern int gtype_size[MAX_TYPES];
 extern int gnum_types;
 extern Token gpredicates[MAX_PREDICATES];
 extern int garity[MAX_PREDICATES];
+extern Bool gaxiom_added[MAX_PREDICATES];
 extern int gpredicates_args_type[MAX_PREDICATES][MAX_ARITY];
 extern int gnum_predicates;
 extern Token gfunctions[MAX_FUNCTIONS];
@@ -1925,8 +1940,10 @@ extern float *gfnumeric_goal_direct_c;
 
 /* applicable actions
  */
-extern int *gA;
+extern int *gA;/* non-axioms */
 extern int gnum_A;
+extern int *gA_axioms; /* axioms */
+extern int gnum_A_axioms;
 
 
 
@@ -1935,9 +1952,12 @@ extern int gnum_A;
  */
 extern int *gH;
 extern int gnum_H;
-/* cost of relaxed plan
+/* added cost of relaxed plan
  */
-extern float gcost;
+extern float gh_cost;
+/* hmax value
+ */
+extern float ghmax;
 
 
 
@@ -1986,5 +2006,39 @@ extern float *gmneed_start_V;
 extern Bool gconditional_effects;
 
 
+/* easier to question: are we optimizing or no?
+ */
+extern Bool gcost_minimizing;
 
-#endif __FF_H
+
+/* stores current A* weight: this is initially given by user,
+ * but changes during anytime search.
+ */
+extern float gw;
+/* this is the minimum weight, ie we'll stop once the weight update
+ * does/would yield a value <= this.
+ * if no such minim weight is given, this will be -1
+ */
+extern float gmin_w;
+
+
+/* this one says whether or not we are actually using
+ * cost-minimizing rplans.
+ * this will be the case by default if we're running cost-
+ * minimizing searches. it can be switched off by a flag;
+ * it is automatically switched off in case there are
+ * numeric preconditions/goals: for this case,
+ * cost-minimizing rplans are not implemented (a numeric prec
+ * may cause an action to come in "later" on in the RPG although
+ * its logical pres are easy. in that case, any new effects will
+ * have a smaller RPGcost value than facts we already have waiting.
+ * in other words, the "Dijsktra" nature breaks.
+ *
+ * ... I suppose there may be a generic solution to this that
+ * can handle numeric precs/goals. Doesn't seem important enough
+ * to bother.
+ */
+extern Bool gcost_rplans;
+
+
+#endif 

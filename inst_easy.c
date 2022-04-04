@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,29 +15,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  *********************************************************************/
-
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
 
 
 
@@ -1021,7 +994,7 @@ void multiply_easy_non_constrained_effect_parameters( int curr_parameter )
 
 
 
-
+/* Bool bla; */
 
 
 
@@ -1038,15 +1011,26 @@ void multiply_easy_op_parameters( void )
 
   for ( i = 0; i < gnum_easy_operators; i++ ) {
     lo = geasy_operators[i];
+/*     if ( strcmp(lo->operator->name, "PORT445_WIN2000") == 0 ) { */
+/*       printf("\nmultiply easy OP: %s", lo->operator->name); */
+/*       bla = TRUE; */
+/*     } else { */
+/*       bla = FALSE; */
+/*     } */
 
     lnum_inertia_conds = 0;
     for ( j = 0; j < lo->num_preconds; j++ ) {
       if ( !gis_added[lo->preconds[j].predicate] &&
 	   !gis_deleted[lo->preconds[j].predicate] ) {
 	linertia_conds[lnum_inertia_conds++] = j;
+/* 	if ( bla ) { */
+/* 	  printf("\n:inertia cond: %d (pred %s)", j, gpredicates[lo->preconds[j].predicate]); */
+/* 	  fflush(stdout); */
+/* 	} */
       }
     }
-      
+
+     
     lnum_multiply_parameters = 0;
     for ( j = 0; j < lo->num_vars; j++ ) {
       for ( k = 0; k < lnum_inertia_conds; k++ ) {
@@ -1064,6 +1048,10 @@ void multiply_easy_op_parameters( void )
       if ( k < lnum_inertia_conds ) {
 	continue;
       }
+/*       if ( bla ) { */
+/* 	printf("\nmultiply parameter: %d", j); */
+/* 	fflush(stdout); */
+/*       } */
       lmultiply_parameters[lnum_multiply_parameters++] = j;
     }
 
@@ -1165,6 +1153,11 @@ void multiply_easy_non_constrained_op_parameters( int curr_parameter )
   EasyTemplate *tmp;
   int i, j, t, n;
 
+/*   if ( bla ) { */
+/*     printf("\nEntry multiply!"); */
+/*     fflush(stdout); */
+/*   } */
+
   if ( curr_parameter == lnum_multiply_parameters ) {
     tmp = new_EasyTemplate( lo );
     for ( i = 0; i < lo->num_vars; i++ ) {
@@ -1180,14 +1173,26 @@ void multiply_easy_non_constrained_op_parameters( int curr_parameter )
   }
 
   if ( curr_parameter == lnum_multiply_parameters - 1 ) {
+/*     if ( bla ) { */
+/*       printf("\nEntry 1 missing!"); */
+/*       fflush(stdout); */
+/*     } */
     t = lo->var_types[lmultiply_parameters[curr_parameter]];
     n = gtype_size[t];
     for ( i = 0; i < n; i++ ) {
       lo->inst_table[lmultiply_parameters[curr_parameter]] = gtype_consts[t][i];
 
+/*       if ( bla ) { */
+/* 	printf("\nmaking instance (numvars %d):", lo->num_vars); */
+/* 	fflush(stdout); */
+/*       } */
       tmp = new_EasyTemplate( lo );
       for ( j = 0; j < lo->num_vars; j++ ) {
 	tmp->inst_table[j] = lo->inst_table[j];
+/* 	if ( bla ) { */
+/* 	  printf("%s (ID %d), ", gconstants[tmp->inst_table[j]], tmp->inst_table[j]); */
+/* 	  fflush(stdout); */
+/* 	} */
       }
       tmp->next = geasy_templates;
       if ( geasy_templates ) {

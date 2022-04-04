@@ -1,8 +1,5 @@
 
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,39 +18,11 @@
  *********************************************************************/
 
 
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
-
-
-
-
-
-
 /*********************************************************************
  * File: relax.h
  * Description: headers for relaxed ADL planning
  *
- * Author: Joerg Hoffmann 2000
+ * Author: Joerg Hoffmann 2000--2002, 2011
  *
  *********************************************************************/ 
 
@@ -72,10 +41,13 @@ Bool LESS( int a, int b );
 
 
 int get_1P( State *S );
-int get_1P_and_A( State *S );
 int get_1P_and_H( State *S );
+int get_1P_and_A( State *S );
+void collect_1P_and_A_info( void );
 void get_A( State *S );
 void collect_A_info( void );
+void get_A_axioms( State *S );
+void collect_A_axioms_info( void );
 
 
 
@@ -88,7 +60,7 @@ void activate_ft( int index, int time );
 void activate_fl( int index, int time );
 void activate_ef( int index, int time );
 void apply_ef( int index, int time );
-void new_fact( int index );
+void new_fact( int index, float RPGcost );
 void new_ef( int index );
 void reset_fixpoint( int max );
 Bool all_goals_activated( int time );

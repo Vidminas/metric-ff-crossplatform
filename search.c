@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,46 +17,14 @@
  *********************************************************************/
 
 
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
-
-
-
-
-
-
 /*********************************************************************
  *
  * File: search.c
  *
  * Description: implementation of routines that search the state space
  *
- *              PDDL level 2 version.
  *
- *              here: basic best-first search, using helpful actions
- *
- *
- * Author: Joerg Hoffmann 2001
+ * Author: Joerg Hoffmann 2000--2002, 2011
  *
  *********************************************************************/ 
 
@@ -143,6 +107,7 @@ BfsNode *lbfs_space_head, *lbfs_space_had;
  * of the best first search space
  */
 BfsHashEntry_pointer lbfs_hash_entry[BFS_HASH_SIZE];
+
 
 
 
@@ -293,12 +258,22 @@ Bool search_for_better_state( State *S, int h, State *S_, int *h_ )
   lehc_current_end = lehc_space_head->next;
   if ( lH ) {
     for ( i = 0; i < gnum_H; i++ ) {
+      if ( gop_conn[gH[i]].axiom ) {
+	printf("\nreal A axiom??\n\n");
+	print_op_name( gH[i] );
+	exit( 1 );
+      }
       if ( result_to_dest( &S__, S, gH[i] ) ) {
 	add_to_ehc_space( &S__, gH[i], NULL );
       }
     }
   } else {
     for ( i = 0; i < gnum_A; i++ ) {
+      if ( gop_conn[gA[i]].axiom ) {
+	printf("\nreal A axiom??\n\n");
+	print_op_name( gA[i] );
+	exit( 1 );
+      }
       if ( result_to_dest( &S__, S, gA[i] ) ) {
 	add_to_ehc_space( &S__, gA[i], NULL );
       }
@@ -878,7 +853,7 @@ Bool same_state( State *S1, State *S2 )
 
 
 
-Bool do_best_first_search( void )
+void do_best_first_search( void )
 
 {
 
@@ -899,44 +874,45 @@ Bool do_best_first_search( void )
   add_to_bfs_space( &ginitial_state, -1, NULL );
 
   while ( TRUE ) {
-    if ( (first = lbfs_space_head->next) == NULL ) {
+    if ( lbfs_space_head->next == NULL ) {
       if ( gcmd_line.display_info ) {
 	printf("\n\nbest first search space empty! problem proven unsolvable.\n\n");
       }
-      return FALSE;
+      return;
     }
 
+    first = lbfs_space_head->next;
     lbfs_space_head->next = first->next;
     if ( first->next ) {
       first->next->prev = lbfs_space_head;
     }
 
-    if ( LESS( first->h, min ) ) {
-      min = first->h;
+    if ( LESS( first->goal_distance, min ) ) {
+      min = first->goal_distance;
       if ( start ) {
 	if ( gcmd_line.display_info ) {
-	  printf("\n\nadvancing to distance: %4d", min);
+	  printf("\n\nadvancing to goal distance: %4d", min);
 	  fflush(stdout);
 	}
 	start = FALSE;
       } else {
 	if ( gcmd_line.display_info ) {
-	  printf("\n                       %4d", min);
+	  printf("\n                            %4d", min);
 	  fflush(stdout);
 	}
       }
     }
 
-    if ( first->h == 0 ) {
+    if ( first->goal_distance == 0 ) {
       break;
     }
 
-    for ( i = 0; i < first->num_H; i++ ) {
-      if ( result_to_dest( &S, &(first->S), first->H[i] ) ) {
-	/* we must include a check here whether the numerical part of the action
-	 * is entirely fulfilled; only those actions are applied.
-	 */
-	add_to_bfs_space( &S, first->H[i], first );
+    for ( i = 0; i < first->num_A; i++ ) {
+      /* we must include a check here whether the numerical part of the action
+       * is entirely fulfilled; only those actions are applied.
+       */
+      if ( result_to_dest( &S, &(first->S), first->A[i] ) ) {
+	add_to_bfs_space( &S, first->A[i], first );
       }
     }
 
@@ -945,7 +921,6 @@ Bool do_best_first_search( void )
   }
 
   extract_plan( first );
-  return TRUE;
 
 }
 
@@ -956,70 +931,72 @@ void add_to_bfs_space( State *S, int op, BfsNode *father )
 {
 
   BfsNode *new, *i;
-  int j, h, intg, int_fn = 0;
-  float cost = 0, floatg = 0, float_fn = 0;
+  int ini_distance, goal_distance;
+  int j;
 
-
-  if ( gcmd_line.optimize && goptimization_established ) {
-    if ( bfs_state_hashed( S ) ) {
-      return;
-    }
-  } else {
-    if ( superior_bfs_state_hashed( S ) ) {
-      return;
-    }
+  if ( superior_bfs_state_hashed( S ) ) {
+    return;
   }
 
-  h = get_1P_and_A( S );
-  if ( gcmd_line.optimize && goptimization_established ) {
-    cost = gcost;
-    /* gtt is mulitplicator of TOTAL-TIME in final metric; if no
-     * total-time part in metric, it is 0
-     */
-    cost += h * gtt;
+  if ( gcmd_line.search_config == 0 || gcmd_line.search_config == 1 ) {
+    goal_distance = get_1P_and_A( S );
   }
-
-  if ( h == INFINITY ) {
+  if ( gcmd_line.search_config == 2 ) {
+    goal_distance = get_1P_and_H( S );
+  }
+  if ( 0 > gcmd_line.search_config || gcmd_line.search_config > 2 ) {
+    printf("\n\nDEBUG ME: illegal search config in BFS.\n\n");
+    exit( 1 );
+  }
+  if ( goal_distance == INFINITY ) {
     return;
   }
 
   if ( father ) {
-    intg = father->g + 1;
+    ini_distance = father->ini_distance + 1;
   } else {
-    intg = 0;
-  }
-
-  if ( gcmd_line.optimize && goptimization_established ) {
-    floatg = state_cost( S, father );
-    float_fn = (((float) gcmd_line.g_weight) * floatg) + (((float) gcmd_line.h_weight) * cost);
-    for ( i = lbfs_space_head; i->next; i = i->next ) {
-      if ( i->next->float_fn >= float_fn ) break;
-    }
-  } else {
-    int_fn = (gcmd_line.g_weight * intg) + (gcmd_line.h_weight * h);
-    for ( i = lbfs_space_head; i->next; i = i->next ) {
-      if ( i->next->int_fn >= int_fn ) break;
-    }
+    ini_distance = 0;
   }
 
   new = new_BfsNode();
   copy_source_to_dest( &(new->S), S );
   new->op = op;
-  new->h = h;
-  if ( gcmd_line.optimize && goptimization_established ) {
-    new->float_fn = float_fn;
-  } else {
-    new->int_fn = int_fn;
-  }
   new->father = father;
-  new->g = intg;
 
-  new->H = ( int * ) calloc( gnum_A, sizeof( int ) );
-  for ( j = 0; j < gnum_A; j++ ) {
-    new->H[j] = gA[j];
+  new->goal_distance = goal_distance;
+  new->ini_distance = ini_distance;
+
+  if ( gcmd_line.search_config == 0 || gcmd_line.search_config == 1 ) {
+    new->A = ( int * ) calloc( gnum_A, sizeof( int ) );
+    for ( j = 0; j < gnum_A; j++ ) {
+      if ( gop_conn[gA[j]].axiom ) {
+	printf("\nreal A axiom??\n\n");
+	print_op_name( gA[j] );
+	exit( 1 );
+      }
+      new->A[j] = gA[j];
+    }
+    new->num_A = gnum_A;
   }
-  new->num_H = gnum_A;
+  if ( gcmd_line.search_config == 2 ) {
+    new->A = ( int * ) calloc( gnum_H, sizeof( int ) );
+    for ( j = 0; j < gnum_H; j++ ) {
+      if ( gop_conn[gH[j]].axiom ) {
+	printf("\nreal A axiom??\n\n");
+	print_op_name( gH[j] );
+	exit( 1 );
+      }
+      new->A[j] = gH[j];
+    }
+    new->num_A = gnum_H;
+  }
 
+  for ( i = lbfs_space_head; i->next; i = i->next ) {
+    /* depth-first style: put new node *in front of* old nodes
+     * with same value
+     */
+    if ( i->next->goal_distance >= goal_distance ) break;
+  }
   new->next = i->next;
   new->prev = i;
   i->next = new;
@@ -1033,39 +1010,566 @@ void add_to_bfs_space( State *S, int op, BfsNode *father )
 
 
 
-float state_cost( State *S, BfsNode *father )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/******************************
+ * WEIGHTED A* IMPLEMENTATION *
+ ******************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void do_weighted_Astar( void )
 
 {
 
-  float cost = 0;
-  int i;
+  BfsNode *first;
+  State S;
+  int i, min = INFINITY;
+  Bool start = TRUE;
 
-  for ( i = 0; i < glnf_metric.num_pF; i++ ) {
-    if ( glnf_metric.pF[i] == -2 ) {
-      /* cost is number of steps from I to S 
-       */ 
-      if ( father ) {
-	cost += gtt * (father->g + 1);
-      }/* no father, no steps, no cost */
-    } else {
-      cost += (glnf_metric.pC[i] * 
-	       (S->f_V[glnf_metric.pF[i]] - ginitial_state.f_V[glnf_metric.pF[i]]));
-    }
+  make_state( &S, gnum_ft_conn, gnum_fl_conn );
+
+  lbfs_space_head = new_BfsNode();
+  lbfs_space_had = NULL;
+
+  for ( i = 0; i < BFS_HASH_SIZE; i++ ) {
+    lbfs_hash_entry[i] = NULL;
   }
 
-  return cost;
+  add_to_weighted_Astar_space( &ginitial_state, -1, NULL );
+
+  while ( TRUE ) {
+    
+    if ( lbfs_space_head->next == NULL ) {
+      if ( gcmd_line.display_info ) {
+	printf("\n\nweighted A* search space empty! problem proven unsolvable.\n\n");
+      }
+      return;
+    }
+
+    first = lbfs_space_head->next;
+    lbfs_space_head->next = first->next;
+    if ( first->next ) {
+      first->next->prev = lbfs_space_head;
+    }
+
+    if ( LESS( first->goal_distance, min ) ) {
+      min = first->goal_distance;
+      if ( start ) {
+	if ( gcmd_line.display_info ) {
+	  printf("\n\nadvancing to goal distance: %4d", min);
+	  fflush(stdout);
+	}
+	start = FALSE;
+      } else {
+	if ( gcmd_line.display_info ) {
+	  printf("\n                            %4d", min);
+	  fflush(stdout);
+	}
+      }
+    }
+
+    if ( first->goal_distance == 0 ) {
+      break;
+    }
+
+    for ( i = 0; i < first->num_A; i++ ) {
+      /* we must include a check here whether the numerical part of the action
+       * is entirely fulfilled; only those actions are applied.
+       */
+      if ( result_to_dest( &S, &(first->S), first->A[i] ) ) {
+	add_to_weighted_Astar_space( &S, first->A[i], first );
+      }
+    }
+
+    first->next = lbfs_space_had;
+    lbfs_space_had = first;
+  }
+
+  extract_plan( first );
 
 }
 
 
 
-void extract_plan( BfsNode *last )
+void add_to_weighted_Astar_space( State *S, int op, BfsNode *father )
 
 {
 
-  BfsNode *i;
-  int ops[MAX_PLAN_LENGTH], num_ops;
+  BfsNode *new, *i;
+  int ini_distance, goal_distance;
+  float g, h, f;
   int j;
+
+  if ( father ) {
+    ini_distance = father->ini_distance + 1;
+    g = father->g + gop_conn[op].cost;
+  } else {
+    ini_distance = 0;
+    g = 0;
+  }
+
+  if ( gcmd_line.cost_bound != -1 && g > gcmd_line.cost_bound ) {
+    return;
+  }
+
+  new = new_BfsNode();
+  copy_source_to_dest( &(new->S), S );
+  new->op = op;
+  new->father = father;
+  if ( Astar_better_state_hashed( new, g ) ) {
+    free( new );
+    return;
+  }
+
+  goal_distance = get_1P_and_A( S );
+  if ( goal_distance == INFINITY ) {
+    free( new );
+    return;
+  }
+  if ( gcmd_line.cost_bound != -1 && g + ghmax > gcmd_line.cost_bound ) {
+    free( new );
+    return;
+  }
+  h = gh_cost;
+  f = g + gw * h;
+
+  new->goal_distance = goal_distance;
+  new->ini_distance = ini_distance;
+  new->g = g;
+  new->h = h;
+  new->f = f;
+
+  new->A = ( int * ) calloc( gnum_A, sizeof( int ) );
+  for ( j = 0; j < gnum_A; j++ ) {
+    if ( gop_conn[gA[j]].axiom ) {
+      printf("\nreal A axiom??\n\n");
+      print_op_name( gA[j] );
+      exit( 1 );
+    }
+    new->A[j] = gA[j];
+  }
+  new->num_A = gnum_A;
+
+  for ( i = lbfs_space_head; i->next; i = i->next ) {
+    /* depth-first style: put new node *in front of* old nodes
+     * with same value
+     */
+    if ( i->next->f >= f ) break;
+  }
+  new->next = i->next;
+  new->prev = i;
+  i->next = new;
+  if ( new->next ) {
+    new->next->prev = new;
+  }
+  
+  hash_bfs_node( new );
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*****************************
+ * A* EPSILON IMPLEMENTATION *
+
+---- A*-epsilon: sort open list on g+h; select best-d from subset of
+     first nodes in open that satisfy g+h<=w*(g+h(first-node))
+---- [Joerg's idea:] in attempt to avoid keeping to expand 0-cost acts
+     that don't change d: tie-break within above by smaller
+     ini-distance
+
+ *****************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void do_Astar_epsilon( void )
+
+{
+
+  BfsNode *first;
+  State S;
+  int i, min = INFINITY;
+  Bool start = TRUE;
+
+
+
+  lbfs_space_had = new_BfsNode();
+  lbfs_space_head = new_BfsNode();
+  make_state( &S, gnum_ft_conn, gnum_fl_conn );
+  for ( i = 0; i < BFS_HASH_SIZE; i++ ) {
+    lbfs_hash_entry[i] = NULL;
+  }
+  add_to_Astar_epsilon_space( &ginitial_state, -1, NULL );
+
+
+
+  while ( TRUE ) {
+    
+    if ( lbfs_space_head->next == NULL ) {
+      if ( gcmd_line.display_info ) {
+	printf("\n\nAstar epsilon search space empty!\nBailing out.");
+      }
+      return;
+    }
+    
+    first = Astar_epsilon_select_first();
+    
+    if ( LESS( first->goal_distance, min ) ) {
+      min = first->goal_distance;
+      if ( start ) {
+	if ( gcmd_line.display_info ) {
+	  printf("\n\nAdvancing to goal distance: %4d", min);
+	  fflush(stdout);
+	}
+	start = FALSE;
+      } else {
+	if ( gcmd_line.display_info ) {
+	  printf("\n                            %4d", min);
+	  fflush(stdout);
+	}
+      }
+    }
+    
+    /* found a plan!
+     */
+    if ( first->goal_distance == 0 ) {
+      break;
+    }
+     
+    for ( i = 0; i < first->num_A; i++ ) {
+      /* we must include a check here whether the numerical part of the action
+       * is entirely fulfilled; only those actions are applied.
+       */
+      if ( result_to_dest( &S, &(first->S), first->A[i] ) ) {
+	add_to_Astar_epsilon_space( &S, first->A[i], first );
+      }
+    }
+    
+    first->next = lbfs_space_had->next;
+    lbfs_space_had->next = first;
+  }
+
+  extract_plan( first );
+
+}
+
+
+
+/* naive implementation, so far...
+ */
+BfsNode *Astar_epsilon_select_first( void )
+
+{
+
+  BfsNode *i, *min_state, *prev, *next;
+  float best_f, tolerated_f;
+  int min_goal_distance;
+  float min_cost;
+  int min_ini_distance;
+  int coin;
+
+  best_f = lbfs_space_head->next->f;
+  tolerated_f = gw * best_f;
+
+  min_goal_distance = -1;
+  min_ini_distance = -1;
+  min_state = NULL;
+  for ( i = lbfs_space_head->next; i; i = i->next ) {
+    /* look at all states that are up to w times worse than current best-f
+     */ 
+    if ( i->f > tolerated_f ) break;
+    /* select one with best goal distance; in case of ties, select
+     * one with minimal distance to ini
+     *
+     * NOTE: if there are several states in here with
+     * same minimal goal&ini distance, then the first
+     * one will be chosen. This is intentional: that one minimizes
+     * f within this group; if there are ties reg f as well then we prefer 
+     * whatever preference (depth-first/breadth-first we had when 
+     * inserting the states into the queue)
+     */
+    if ( min_goal_distance == -1 || 
+	 i->goal_distance < min_goal_distance ) {
+      min_goal_distance = i->goal_distance;
+      min_cost = i->g;
+      min_state = i;
+      continue;
+    }
+/*     if ( i->goal_distance == min_goal_distance && */
+/* 	 i->g < min_cost ) { */
+/*       min_goal_distance = i->goal_distance; */
+/*       min_cost = i->g; */
+/*       min_state = i; */
+/*     } */
+    if ( i->goal_distance == min_goal_distance ) {
+/* 	 i->g == min_cost ) { */
+      coin = random() % 2;
+      if ( coin == 1 ) {
+	min_goal_distance = i->goal_distance;
+	min_cost = i->g;
+	min_state = i;
+      }
+    }
+/*     if ( min_goal_distance == -1 ||  */
+/* 	 i->goal_distance < min_goal_distance || */
+/* 	 (i->goal_distance == min_goal_distance &&  */
+/* 	  i->ini_distance < min_state->ini_distance) || */
+/* 	 (i->goal_distance == min_goal_distance &&  */
+/* 	  i->ini_distance == min_state->ini_distance && */
+/* 	  gop_conn[i->op].cost > EPSILON && gop_conn[min_state->op].cost == EPSILON) ) { */
+/*       min_goal_distance = i->goal_distance; */
+/*       min_state = i; */
+/*     } */
+/*     if ( i->goal_distance == min_goal_distance &&  */
+/* 	 i->ini_distance == min_state->ini_distance && */
+/* 	 gop_conn[i->op].cost == EPSILON && gop_conn[min_state->op].cost == EPSILON ) { */
+/*       coin = random() % 2; */
+/*       if ( coin == 1 ) { */
+/* 	min_goal_distance = i->goal_distance; */
+/* 	min_state = i; */
+/*       } */
+/*     } */
+/*     if ( i->goal_distance == min_goal_distance &&  */
+/* 	 i->ini_distance == min_state->ini_distance && */
+/* 	 gop_conn[i->op].cost > EPSILON && gop_conn[min_state->op].cost > EPSILON ) { */
+/*       coin = random() % 2; */
+/*       if ( coin == 1 ) { */
+/* 	min_goal_distance = i->goal_distance; */
+/* 	min_state = i; */
+/*       } */
+/*     } */
+  }
+  if ( min_goal_distance == -1 ) {
+    printf("\n\nDEBUG ME! no new first state found in A* epsilon.\n\n");
+    exit( 1 );
+  }
+
+  prev = min_state->prev;
+  next = min_state->next;
+  prev->next = min_state->next;
+  if ( next ) {
+    next->prev = prev;
+  }
+
+  return min_state;
+
+}
+
+
+
+void add_to_Astar_epsilon_space( State *S, int op, BfsNode *father )
+
+{
+
+  static Bool fc = TRUE;
+  static int *remaining;
+  int num_remaining, index;
+  BfsNode *new, *i;
+  int ini_distance, goal_distance;
+  float g, h, f;
+  int j, k;
+
+  if ( fc ) {
+    remaining = (int*) calloc(gnum_op_conn, sizeof(int));
+    fc = FALSE;
+  }
+
+  if ( father ) {
+    ini_distance = father->ini_distance + 1;
+    g = father->g + gop_conn[op].cost;
+  } else {
+    ini_distance = 0;
+    g = 0;
+  }
+
+  if ( gcmd_line.cost_bound != -1 && g > gcmd_line.cost_bound ) {
+    return;
+  }
+
+  new = new_BfsNode();
+  copy_source_to_dest( &(new->S), S );
+  new->op = op;
+  new->father = father;
+  if ( Astar_better_state_hashed( new, g ) ) {
+    free( new );
+    return;
+  }
+
+  if ( gcmd_line.debug ) {
+    printf("\nEVALUATING: ");
+    print_state_trace(father);
+    if ( op >= 0 ) {
+      printf("\nnew added: "); print_op_name(op);
+    } else {
+      printf("\nnew added: (null)"); 
+    }
+    fflush(stdout);
+  }      
+
+  goal_distance = get_1P_and_A( S );
+
+  /*  printf("goal dist: %d, hmax: %f\n", goal_distance, ghmax); */
+
+  if ( goal_distance == INFINITY ) {
+    free( new );
+    return;
+  }
+  if ( gcmd_line.cost_bound != -1 && g + ghmax > gcmd_line.cost_bound ) {
+    free( new );
+    return;
+  }
+  h = gh_cost;
+  f = g + h;
+
+  new->goal_distance = goal_distance;
+  new->ini_distance = ini_distance;
+  new->g = g;
+  new->h = h;
+  new->f = f;
+
+  new->A = ( int * ) calloc( gnum_A, sizeof( int ) );
+  for ( j = 0; j < gnum_A; j++ ) {
+    if ( gop_conn[gA[j]].axiom ) {
+      printf("\nreal A axiom??\n\n");
+      print_op_name( gA[j] );
+      exit( 1 );
+    }
+    new->A[j] = gA[j];
+  }
+  new->num_A = gnum_A;
+
+  for ( i = lbfs_space_head; i->next; i = i->next ) {
+    /* breadth-first style: put new node *in front of* old nodes
+     * with same value
+     */
+    if ( i->next->f > f ) break;
+  }
+  new->next = i->next;
+  new->prev = i;
+  i->next = new;
+  if ( new->next ) {
+    new->next->prev = new;
+  }
+  
+  hash_bfs_node( new );
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/************************************************************
+ * SOME HELPERS USED BY ALL BFS/A* VARIANTS                 *
+ ************************************************************/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* dirty, but well... checks as side effect whether or not a previous
+ * plan is a subsequence of this one...
+ */
+Bool extract_plan( BfsNode *last )
+
+{
+
+  static Bool fc = TRUE;
+  static int *ops;
+
+  BfsNode *i;
+  int j, num_ops;
+  float cost;
+
+  if ( fc ) {
+    ops = ( int * ) calloc(MAX_PLAN_LENGTH, sizeof(int));
+
+    fc = FALSE;
+  }
 
   num_ops = 0;
   for ( i = last; i->op != -1; i = i->father ) {
@@ -1081,8 +1585,92 @@ void extract_plan( BfsNode *last )
   for ( j = num_ops - 1; j > -1; j-- ) {
     gplan_ops[gnum_plan_ops++] = ops[j];
   }
+  
+  if ( gcmd_line.display_info ) {
+    printf("\n\nff: found legal plan as follows");
+    printf("\nstep ");
+    cost = 0;
+    for ( j = 0; j < gnum_plan_ops; j++ ) {
+      printf("%4d: ", j);
+      print_op_name( gplan_ops[j] );
+      if ( j < gnum_plan_ops-1  ) {
+	printf("\n     ");
+      }
+      if ( goptimization_established ) {
+	cost += gop_conn[gplan_ops[j]].cost;
+      }
+    }
+    if ( goptimization_established ) {
+      printf("\nplan cost: %f", cost);
+    }
+  }
+
+  return TRUE;
 
 }
+
+
+
+void print_open_list( void )
+
+{
+
+  BfsNode *i;
+  int n = 0;
+
+  for ( i = lbfs_space_head->next; i; i = i->next ) {
+    printf("\n------------------------------------------------------------");
+    printf("\nSTATE %5d: ini %3d goal %3d g %8.2f h %8.2f f %8.2f\nTRACE: ",
+	   n++, i->ini_distance, i->goal_distance, i->g, i->h, i->f);
+    print_state_trace(i);
+  }
+
+}
+
+
+
+void print_state_trace( BfsNode *n )
+
+{
+
+  BfsNode *i;
+  int ops[MAX_PLAN_LENGTH], num_ops;
+  int j;
+  float cost;
+
+  if ( n == NULL ) {
+    printf("\n(null)");
+    return;
+  }
+
+  num_ops = 0;
+  for ( i = n; i->op != -1; i = i->father ) {
+    if ( num_ops == MAX_PLAN_LENGTH ) {
+      printf("\nincrease MAX_PLAN_LENGTH! currently %d\n\n",
+	     MAX_PLAN_LENGTH);
+      exit( 1 );
+    }
+    ops[num_ops++] = i->op;
+  }
+  
+  cost = 0;
+  for ( j = num_ops - 1; j > -1; j-- ) {
+    printf("\n");
+    print_op_name( ops[j] );
+    if ( goptimization_established ) {
+      cost += gop_conn[ops[j]].cost;
+    }
+  }
+  if ( goptimization_established ) {
+    printf("\nCOST: %f", cost);
+  }
+
+}
+
+
+
+
+
 
 
 
@@ -1100,7 +1688,8 @@ void extract_plan( BfsNode *last )
 
 
 /************************************************************
- * HASHING ALGORITHM FOR RECOGNIZING REPEATED STATES IN BFS *
+ * HASHING ALGORITHM FOR RECOGNIZING REPEATED STATES        *
+ * --- USED FOR ALL BFS/A* VARIANTS                         *
  ************************************************************/
 
 
@@ -1121,7 +1710,7 @@ void hash_bfs_node( BfsNode *n )
   int sum, index;
   BfsHashEntry *h, *tmp;
 
-  sum = state_sum( &(n->S) );
+  sum = logical_state_sum( &(n->S) );
   index = sum & BFS_HASH_BITS;
 
   h = lbfs_hash_entry[index];
@@ -1150,7 +1739,7 @@ Bool bfs_state_hashed( State *S )
   int sum, index;
   BfsHashEntry *h;
 
-  sum = state_sum( S );
+  sum = logical_state_sum( S );
   index = sum & BFS_HASH_BITS;
 
   h = lbfs_hash_entry[index];
@@ -1158,8 +1747,43 @@ Bool bfs_state_hashed( State *S )
     if ( h->sum != sum ) {
       continue;
     }
-    if ( same_state( &(h->bfs_node->S), S ) ) {
+    if ( logical_same_state( &(h->bfs_node->S), S ) ) {
       return TRUE;
+    }
+  }
+
+  return FALSE;
+
+}
+
+
+
+Bool Astar_better_state_hashed( BfsNode *n, float g )
+
+{
+
+  State *S = &(n->S);
+  int sum, index;
+  BfsHashEntry *h;
+
+  sum = logical_state_sum( S );
+  index = sum & BFS_HASH_BITS;
+
+  h = lbfs_hash_entry[index];
+  for ( h = lbfs_hash_entry[index]; h; h = h->next ) {
+    if ( h->sum != sum ) {
+      continue;
+    }
+    if ( logical_same_state( &(h->bfs_node->S), S ) ) {
+      /* prune the new state ONLY IF THE OLD ONE IS STRICLY BETTER!
+       * ====> keep equally good-looking alternatives IN for the sake
+       * of variety!!
+       *
+       * ... even pruning nodes at all may be questionable!
+       */
+      if ( h->bfs_node->g < g ) {
+	return TRUE;
+      }
     }
   }
 
@@ -1218,6 +1842,54 @@ int state_sum( State *S )
   return sum;
 
 }
+
+
+
+int logical_state_sum( State *S )
+
+{
+
+  int i, sum = 0;
+
+  for ( i = 0; i < S->num_F; i++ ) {
+    sum += gft_conn[S->F[i]].rand;
+  }
+
+  return sum;
+
+}
+
+
+
+Bool logical_same_state( State *S1, State *S2 ) 
+
+{
+
+  int i, j;
+
+  if ( S1->num_F != S2->num_F ) {
+    return FALSE;
+  }
+
+  for ( i = 0; i < S2->num_F; i++ ) {
+    for ( j = 0; j < S1->num_F; j++ ) {
+      if ( S1->F[j] == S2->F[i] ) {
+	break;
+      }
+    }
+    if ( j == S1->num_F ) {
+      return FALSE;
+    }
+  }
+
+  return TRUE;
+
+}
+
+
+
+
+
 
 
 
@@ -1494,6 +2166,11 @@ Bool result_to_dest( State *dest, State *source, int op )
     if ( in_del[source->F[i]] ) {
       continue;
     }
+    /* no derived facts! Those must be derived anew.
+     */
+    if ( gft_conn[source->F[i]].axiom_added ) {
+	continue;
+    }
     dest->F[dest->num_F++] = source->F[i];
     in_dest[source->F[i]] = TRUE;
   }
@@ -1511,6 +2188,10 @@ Bool result_to_dest( State *dest, State *source, int op )
       in_dest[gef_conn[ef].A[j]] = TRUE;
     }
   }
+
+  /* apply derived predicates til fixpoint.
+   */
+  do_axiom_update( dest );
 
   /* unset infos
    */
@@ -1563,6 +2244,88 @@ Bool determine_source_val( State *source, int fl, float *val )
 
 
 
+/* need to make sure that there are no "axiom deletes", ie
+ * derived predicates do not appear as negated preconditions
+ * anywhere... means: derived preds allowed ONLY as positive
+ * preconditions in regular ops, and as positive goals!
+ *
+ * MUST include this check into inst_final.c
+ */
+void do_axiom_update( State *dest )
+
+{
+
+    static Bool first_call = TRUE;
+    static Bool *in_dest;
+
+    int i, j, k, ft;
+    Bool changes = TRUE;
+  
+    if ( first_call ) {
+      in_dest = ( Bool * ) calloc( gnum_ft_conn, sizeof( Bool ) );
+      for ( i = 0; i < gnum_ft_conn; i++ ) {
+	in_dest[i] = FALSE;
+      }
+      first_call = FALSE;
+    }
+
+    if ( gcmd_line.debug ) {
+      printf("\n\n----------------------------------------------entering axiom update");
+    }
+
+    for ( i = 0; i < dest->num_F; i++ ) {
+      in_dest[dest->F[i]] = TRUE;
+    }
+
+    if ( gcmd_line.debug ) {
+      printf("\n\n----------------------------------------------dest prior axfp");
+      print_State( *dest );
+    }
+
+    /* now apply the axioms up to a fixpoint.
+     */
+    while ( changes ) {
+      changes = FALSE;
+	
+      if ( gcmd_line.debug ) {
+	printf("\n\n---------------------------new ax iteration");
+      }
+      get_A_axioms( dest );
+      for ( i = 0; i < gnum_A_axioms; i++ ) {
+	if ( !gop_conn[gA_axioms[i]].axiom ) {
+	  printf("\naxiom A no axiom??\n\n");
+	  exit( 1 );
+	}
+	if ( gcmd_line.debug ) {
+	  printf("\n----------------------------------apply axiom ");
+	  print_op_name( gA_axioms[i] );
+	}
+	ft = gef_conn[gop_conn[gA_axioms[i]].E[0]].A[0];
+	if ( in_dest[ft] ) {
+	  continue;
+	}
+	changes = TRUE;
+	if ( gcmd_line.debug ) {
+	  printf(" ADD!");
+	}
+	dest->F[dest->num_F++] = ft;
+	in_dest[ft] = TRUE;
+      }
+    }
+
+    if ( gcmd_line.debug ) {
+      printf("\n\n----------------------------------------------dest after ax fp");
+      print_State( *dest );
+    }
+
+    for ( i = 0; i < dest->num_F; i++ ) {
+      in_dest[dest->F[i]] = FALSE;
+    }
+    
+}
+
+
+
 void copy_source_to_dest( State *dest, State *source )
 
 {
@@ -1602,3 +2365,8 @@ void source_to_dest( State *dest, State *source )
   }
 
 }
+
+
+
+
+

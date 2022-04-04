@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,43 +17,13 @@
  *********************************************************************/
 
 
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
-
-
-
-
-
 /*********************************************************************
  *
  * File: search.h
  *
  * Description: headers of routines that search the state space
  *
- *              ADL version, Enforced Hill-climbing enhanced with
- *                           Goal-adders deletion heuristic
- *
- * Author: Joerg Hoffmann 2000
+ * Author: Joerg Hoffmann 2000--2002, 2011
  *
  *********************************************************************/ 
 
@@ -96,22 +62,41 @@ Bool same_state( State *S1, State *S2 );
 
 
 
-Bool do_best_first_search( void );
+void do_best_first_search( void );
 void add_to_bfs_space( State *S, int op, BfsNode *father );
-float state_cost( State *S, BfsNode *father );
-void extract_plan( BfsNode *last );
+
+
+
+void do_weighted_Astar( void );
+void add_to_weighted_Astar_space( State *S, int op, BfsNode *father );
+
+
+
+void do_Astar_epsilon_repairing( void );
+BfsNode *Astar_epsilon_select_first( void );
+void add_to_Astar_epsilon_space( State *S, int op, BfsNode *father );
+
+
+
+Bool extract_plan( BfsNode *last );
+void print_open_list( void );
+void print_state_trace( BfsNode *n );
 
 
 
 void hash_bfs_node( BfsNode *n );
 Bool bfs_state_hashed( State *S );
+Bool Astar_better_state_hashed( BfsNode *n, float g );
 Bool superior_bfs_state_hashed( State *S );
 int state_sum( State *S );
+int logical_state_sum( State *S );
+Bool logical_same_state( State *S1, State *S2 );
 
 
 
 Bool result_to_dest( State *dest, State *source, int op );
 Bool determine_source_val( State *source, int fl, float *val );
+void do_axiom_update( State *dest );
 void copy_source_to_dest( State *dest, State *source );
 void source_to_dest( State *dest, State *source );
 

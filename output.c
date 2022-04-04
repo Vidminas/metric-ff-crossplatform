@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,29 +15,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  *********************************************************************/
-
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
 
 
 /*********************************************************************
@@ -364,7 +337,9 @@ void print_plops( PlOperator *plop )
   }
 
   for ( i_plop = plop; i_plop!=NULL; i_plop = i_plop->next ) {
-    printf("\nOPERATOR ");
+    printf("\n");
+    if ( i_plop->axiom ) printf("AXIOM-");
+    printf("OPERATOR ");
     printf("%s", i_plop->name);
     printf("\nparameters: (%d real)\n", i_plop->number_of_real_params);
     print_FactList ( i_plop->params, "\n", " : ");
@@ -565,7 +540,8 @@ void print_Operator( Operator *o )
   NumericEffect *ne;
   int i, m = 0;
 
-  printf("\n\n----------------Operator %s, translated form, step 1--------------\n", o->name);
+  printf("\n\n----------------Operator %s, axiom %d, translated form, step 1--------------\n", 
+	 o->name, o->axiom);
 
   for ( i = 0; i < o->num_vars; i++ ) {
     printf("\nx%d (%s) of type %s, removed ? %s",
@@ -1485,13 +1461,22 @@ void print_plan( void )
 {  
 
   int i;
+  float cost = 0;
 
   printf("\n\nff: found legal plan as follows");
-  printf("\n\nstep ");
+  printf("\nstep ");
   for ( i = 0; i < gnum_plan_ops; i++ ) {
     printf("%4d: ", i);
     print_op_name( gplan_ops[i] );
-    printf("\n     ");
+    if ( i < gnum_plan_ops-1 ) {
+      printf("\n     ");
+    }
+    if ( goptimization_established ) {
+      cost += gop_conn[gplan_ops[i]].cost;
+    }
+  }
+  if ( goptimization_established ) {
+    printf("\nplan cost: %f", cost);
   }
 
 }

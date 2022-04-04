@@ -1,8 +1,4 @@
-
-
 /*********************************************************************
- * (C) Copyright 2002 Albert Ludwigs University Freiburg
- *     Institute of Computer Science
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,30 +15,6 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  *********************************************************************/
-
-
-
-
-/*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
- * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
- * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
- * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
- * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
- * of the user.
- */
-
-
-
-
-
 
 
 
@@ -127,7 +99,7 @@ void perform_reachability_analysis( void )
 
 {
 
-  int size, i, j, k, adr, num;
+  int size, i, j, k, adr, num, pargtype;
   Bool fixpoint;
   Facts *f;
   NormOperator *no;
@@ -144,7 +116,8 @@ void perform_reachability_analysis( void )
   for ( i = 0; i < gnum_predicates; i++ ) {
     size =  1;
     for ( j = 0; j < garity[i]; j++ ) {
-      size *= gnum_constants;
+      pargtype = gpredicates_args_type[i][j];
+      size *= gtype_size[pargtype];
     }
 
     lpos[i] = ( int_pointer ) calloc( size, sizeof( int ) );
@@ -243,6 +216,7 @@ void perform_reachability_analysis( void )
 
       tmp = new_Action();
       tmp->norm_operator = no;
+      tmp->axiom = no->operator->axiom;
       for ( i = 0; i < no->num_vars; i++ ) {
 	tmp->inst_table[i] = t1->inst_table[i];
       }
@@ -324,6 +298,7 @@ void perform_reachability_analysis( void )
 
       tmp = new_Action();
       tmp->pseudo_action = pa;
+      tmp->axiom = pa->operator->axiom;
       for ( j = 0; j < pa->operator->num_vars; j++ ) {
 	tmp->inst_table[j] = pa->inst_table[j];
       }
@@ -367,6 +342,7 @@ void perform_reachability_analysis( void )
 	  continue;
 	}
 	printf("\ntemplate: ");
+	if ( a->axiom ) printf("(axiom) ");
 	for ( j = 0; j < goperators[i]->number_of_real_params; j++ ) {
 	  printf("%s", gconstants[a->name_inst_table[j]]);
 	  if ( j < goperators[i]->num_vars-1 ) {
@@ -382,15 +358,44 @@ void perform_reachability_analysis( void )
 
 
 
+/* bit complicated to avoid memory explosion when high arity predicates take
+ * num_obs ^ arity space. take space for individual arg types only; 
+ * must consider pred args in smallest - to - largest - type order to make
+ * mapping injective.
+ */
 int fact_adress( void )
 
 {
 
-  int r = 0, b = 1, i;
+  int r = 0, b = 1, i, j, min, minj;
+  Bool done[MAX_ARITY];
 
-  for ( i = garity[lp] - 1; i > -1; i-- ) {
-    r += b * largs[i];
-    b *= gnum_constants;
+  for ( i = 0; i < garity[lp]; i++ ) {
+    done[i] = FALSE;
+  }
+
+  for ( i = 0; i < garity[lp]; i++ ) {
+    min = -1;
+    minj = -1;
+    for ( j = 0; j < garity[lp]; j++ ) {
+      if ( !done[j] ) {
+	if ( min == -1 ||
+	     gtype_size[gpredicates_args_type[lp][j]] < min ) {
+	  min = gtype_size[gpredicates_args_type[lp][j]];
+	  minj = j;
+	}
+      }
+    }
+    if ( minj == -1 || min == -1 ) {
+      printf("\n\nmin or minj not made in fact adress?\n\n");
+      exit( 1 );
+    }
+    /* now minj is remaining arg with lowest type size min
+     */
+    /* need number **within type** here! */
+    r += b * gmember_nr[largs[minj]][gpredicates_args_type[lp][minj]];
+    b *= min;
+    done[minj] = TRUE;
   }
 
   return r;
@@ -1155,10 +1160,12 @@ void create_final_initial_state( void )
   FluentValues *fvs;
 
   i = 0;
-  for ( f = ginitial; f; f = f->next ) i++;
+/*   for ( f = ginitial; f; f = f->next ) i++; */
   /* we need space for transformation fluents to come!
+   *
+   * ALSO, we may need space for derived facts!!!
    */
-  make_state( &ginitial_state, i, MAX_RELEVANT_FLUENTS );
+  make_state( &ginitial_state, gnum_relevant_facts + 1, MAX_RELEVANT_FLUENTS );
 
   for ( f = ginitial; f; f = f->next ) {
     lp = f->fact->predicate;
@@ -1924,11 +1931,6 @@ void build_connectivity_graph( void )
   Action *a;
   ActionEffect *e;
 
-  struct timeb tp;
-
-  ftime( &tp );
-  srandom( tp.millitm );
-
   gnum_ft_conn = gnum_relevant_facts;
   gnum_fl_conn = gnum_relevant_fluents;
   gnum_op_conn = gnum_actions;
@@ -1942,6 +1944,8 @@ void build_connectivity_graph( void )
     gft_conn[i].num_PC = 0;
     gft_conn[i].num_A = 0;
     gft_conn[i].num_D = 0;
+
+    gft_conn[i].axiom_added = FALSE;
 
     gft_conn[i].rand = random() % BIG_INT;
   }
@@ -2022,6 +2026,7 @@ void build_connectivity_graph( void )
   n_ef = 0;
   for ( a = gactions; a; a = a->next ) {
     gop_conn[n_op].action = a;
+    gop_conn[n_op].axiom = a->axiom;
     if ( a->num_effects == 0 ) {
       continue;
     }
@@ -2367,6 +2372,25 @@ void build_connectivity_graph( void )
     }
     /*****************************IMPLIED EFFECTS - END********************************/
 
+    /* op cost is sum of eff costs + gtt*1:
+     * [gtt is multiplicator of TOTAL-TIME in final metric; if no
+     * total-time part in metric, it is 0]
+     * ie eff-costs plus the cost for the time taken by 1 more step.
+     */
+    gop_conn[n_op].cost = gtt;
+    if ( gop_conn[n_op].num_E > 0 ) {
+      for ( i = 0; i < gop_conn[n_op].num_E; i++ ) {
+	ef = gop_conn[n_op].E[i];
+	if ( gef_conn[ef].illegal ) {
+	  continue;
+	}
+	if ( gef_conn[ef].removed ) {
+	  continue;
+	}
+	gop_conn[n_op].cost += gef_conn[ef].cost;
+      }
+    }
+
     /* first sweep: only count the space we need for the fact arrays !
      */
     if ( gop_conn[n_op].num_E > 0 ) {
@@ -2377,6 +2401,9 @@ void build_connectivity_graph( void )
 	}
  	for ( j = 0; j < gef_conn[ef].num_A; j++ ) {
 	  gft_conn[gef_conn[ef].A[j]].num_A++;
+	  if ( gop_conn[n_op].axiom ) {
+	      gft_conn[gef_conn[ef].A[j]].axiom_added = TRUE;
+	  }
 	}
 	for ( j = 0; j < gef_conn[ef].num_D; j++ ) {
 	  gft_conn[gef_conn[ef].D[j]].num_D++;
@@ -2394,6 +2421,7 @@ void build_connectivity_graph( void )
 	}
       }
     }
+    
 
     n_op++;
   }
@@ -2548,13 +2576,37 @@ void build_connectivity_graph( void )
   }
   /*****************************GOAL - END********************************/
 
+
+
+  /********************
+   * safety: if there are numeric precs/goals, need to turn 
+   * cost-minimizing rplans off!!!
+   * (see comments with def of gcost_rplans
+   */
+  for ( i = 0; i < gnum_ef_conn; i++ ) {
+    if ( gcost_rplans && gef_conn[i].num_f_PC > 0 ) {
+      printf("\nwarning: numeric precondition. turning cost-minimizing relaxed plans OFF.");
+      gcost_rplans = FALSE;
+      break;
+    }
+  }
+  if ( gcost_rplans && gnum_fnumeric_goal > 0 ) {
+    printf("\nwarning: numeric goal. turning cost-minimizing relaxed plans OFF.");
+    gcost_rplans = FALSE;
+  }
+
+
+
+
   if ( gcmd_line.display_info == 125 ) {
     printf("\n\ncreated connectivity graph as follows:");
 
     printf("\n\n------------------OP ARRAY:-----------------------");
     for ( i = 0; i < gnum_op_conn; i++ ) {
-      printf("\n\nOP: ");
+      printf("\n\nOP %d: ", i);
+      if ( gop_conn[i].axiom ) printf("(axiom) ");
       print_op_name( i );
+      printf(" cost %f", gop_conn[i].cost);
       printf("\n----------EFFS:");
       for ( j = 0; j < gop_conn[i].num_E; j++ ) {
 	printf("\neffect %d", gop_conn[i].E[j]);
@@ -2643,6 +2695,7 @@ void build_connectivity_graph( void )
       printf("\n\nFT: ");
       print_ft_name( i );
       printf(" rand: %d", gft_conn[i].rand);
+      printf(" --------- AXIOM ADDED %d", gft_conn[i].axiom_added);
       printf("\n----------PRE COND OF:");
       for ( j = 0; j < gft_conn[i].num_PC; j++ ) {
 	printf("\neffect %d", gft_conn[i].PC[j]);
