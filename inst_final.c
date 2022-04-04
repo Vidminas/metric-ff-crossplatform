@@ -1947,7 +1947,7 @@ void build_connectivity_graph( void )
 
     gft_conn[i].axiom_added = FALSE;
 
-    gft_conn[i].rand = random() % BIG_INT;
+    gft_conn[i].rand = rand() % BIG_INT;
   }
 
   gnum_real_fl_conn = 0;
@@ -1959,7 +1959,7 @@ void build_connectivity_graph( void )
     if ( grelevant_fluents_lnf[i] == NULL ) {
       gfl_conn[i].artificial = FALSE;
       gnum_real_fl_conn++;
-      gfl_conn[i].rand = random() % BIG_INT;
+      gfl_conn[i].rand = rand() % BIG_INT;
     } else {
       /* once we're in here we'll stay as all artificial 
        * fluents are appended to the end.

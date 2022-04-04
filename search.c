@@ -1368,7 +1368,7 @@ BfsNode *Astar_epsilon_select_first( void )
 /*     } */
     if ( i->goal_distance == min_goal_distance ) {
 /* 	 i->g == min_cost ) { */
-      coin = random() % 2;
+      coin = rand() % 2;
       if ( coin == 1 ) {
 	min_goal_distance = i->goal_distance;
 	min_cost = i->g;
@@ -1388,7 +1388,7 @@ BfsNode *Astar_epsilon_select_first( void )
 /*     if ( i->goal_distance == min_goal_distance &&  */
 /* 	 i->ini_distance == min_state->ini_distance && */
 /* 	 gop_conn[i->op].cost == EPSILON && gop_conn[min_state->op].cost == EPSILON ) { */
-/*       coin = random() % 2; */
+/*       coin = rand() % 2; */
 /*       if ( coin == 1 ) { */
 /* 	min_goal_distance = i->goal_distance; */
 /* 	min_state = i; */
@@ -1397,7 +1397,7 @@ BfsNode *Astar_epsilon_select_first( void )
 /*     if ( i->goal_distance == min_goal_distance &&  */
 /* 	 i->ini_distance == min_state->ini_distance && */
 /* 	 gop_conn[i->op].cost > EPSILON && gop_conn[min_state->op].cost > EPSILON ) { */
-/*       coin = random() % 2; */
+/*       coin = rand() % 2; */
 /*       if ( coin == 1 ) { */
 /* 	min_goal_distance = i->goal_distance; */
 /* 	min_state = i; */
