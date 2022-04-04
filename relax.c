@@ -69,8 +69,8 @@
 
 /* fixpoint
  */
-int *lF;
-int lnum_F;
+extern int *lF;
+extern int lnum_F;
 int *lE;
 int lnum_E;
 
