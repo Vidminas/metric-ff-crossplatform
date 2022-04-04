@@ -4,16 +4,16 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- * 
+ *
  *********************************************************************/
 
 /*********************************************************************
@@ -26,22 +26,10 @@
  * Author: Joerg Hoffmann 2012
  * Contact: hoffmann@cs.uni-saarland.de
  *
- *********************************************************************/ 
-
-
-
-
-
-
-
+ *********************************************************************/
 
 #ifndef __FF_H
 #define __FF_H
-
-
-
-
-
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,57 +37,20 @@
 #include <ctype.h>
 #include "times.h"
 
-
-
-
-
-
-
-
-
 /*
  *  ------------------------------------ DEFINES ----------------------------
  */
-
-
-
-
-
-
-
-
-
-
 
 /***********************
  * MEANINGLESS HELPERS *
  ***********************/
 
-
-
-
 /* strcmp returns 0 if two strings are equal, which is not nice */
 #define SAME 0
-
-
-
-
-
-
-
-
 
 /****************
  * PARSING ETC. *
  ****************/
-
-
-
-
-
-
-
-
 
 /* various defines used in parsing
  */
@@ -110,38 +61,21 @@
 #define STANDARD_TYPE "OBJECT\0"
 #define EITHER_STR "EITHER"
 
-
-
-
-
-
-
-
-
 /***************************
  * SOME ARBITRARY SETTINGS *
  ***************************/
 
-
-
-
-
-
-
 /* maximal string length
  */
-#define MAX_LENGTH 256 
+#define MAX_LENGTH 256
 
-
-/* marks border between connected items 
+/* marks border between connected items
  */
 #define CONNECTOR "~"
-
 
 /* size of goals_at array in 1P extraction
  */
 #define RELAXED_STEPS_DEFAULT 25
-
 
 /* size of hash table for repeated states checking
  * during EHC breadth first search
@@ -149,13 +83,11 @@
 #define EHC_HASH_SIZE 8192
 #define EHC_HASH_BITS 8191
 
-
 /* size of hash table for repeated states checking
  * in plan construction
  */
 #define PLAN_HASH_SIZE 1024
 #define PLAN_HASH_BITS 1023
-
 
 /* size of hash table for repeated states checking
  * during BFS search
@@ -163,43 +95,26 @@
 #define BFS_HASH_SIZE 65536
 #define BFS_HASH_BITS 65535
 
-
 /* cut random values of facts off modulo this value,
  * to make state sums fit into a single integer
  */
 #define BIG_INT 1500000
 
-
 /* max number of different fluents in one list of LNF
  */
 #define MAX_LNF_F 25
-
 
 /* max number of comps in one cond / precond / goal
  */
 #define MAX_LNF_COMPS 100
 
-
 /* max number of lnf effects in one action effect
  */
 #define MAX_LNF_EFFS 50
 
-
-
-
-
-
-
 /************************
  * INSTANTIATION LIMITS *
  ************************/
-
-
-
-
-
-
-
 
 #define MAX_CONSTANTS 2000
 #define MAX_PREDICATES 50
@@ -208,63 +123,34 @@
 #define MAX_ARITY 5
 #define MAX_VARS 15
 
-
 #define MAX_TYPE 2000
-
 
 #define MAX_OPERATORS 50000
 
-
 /* in DNF: AND with OR - sons - collect 'hitting set':
- * one son of each OR node. 
+ * one son of each OR node.
  *
  * this here is initial max number of such son s that can be collected
  * (grows dynamically, if required)
  */
 #define MAX_HITTING_SET_DEFAULT 1000
 
-
 #define MAX_TYPE_INTERSECTIONS 10
-
 
 #define MAX_RELEVANT_FACTS 150000
 #define MAX_RELEVANT_FLUENTS 1000
-
-
-
-
-
 
 /******************************************
  * DOMAIN STRUCTURE AND SEARCHING LIMITS *
  ******************************************/
 
-
-
-
-
-
 #define MAX_STATE 800
 
-
 #define MAX_PLAN_LENGTH 500
-
-
-
-
-
 
 /****************
  * CODE DEFINES *
  ****************/
-
-
-
-
-
-
-
-
 
 /* not a real 'code' define; used in relax and search to encode
  * infinite level number / plan length
@@ -272,12 +158,6 @@
 #ifndef INFINITY
 #define INFINITY -1
 #endif
-
-
-
-
-
-
 
 /* define boolean types if not allready defined
  */
@@ -289,66 +169,40 @@ typedef unsigned char Bool;
 #endif /* TRUE */
 #endif /* Bool */
 
-
 /* code a param number into a negative number and vice versa
  */
-#define ENCODE_VAR( val ) (val * (-1)) - 1
-#define DECODE_VAR( val ) (val + 1) * (-1)
+#define ENCODE_VAR(val) (val * (-1)) - 1
+#define DECODE_VAR(val) (val + 1) * (-1)
 
-#define GET_CONSTANT( val, pointer ) ( val >= 0 ) ? val : pointer->inst_table[DECODE_VAR( val )]
-
+#define GET_CONSTANT(val, pointer) (val >= 0) ? val : pointer->inst_table[DECODE_VAR(val)]
 
 /* Check allocated memory
  */
-#define CHECK_PTR(p) if (NULL == (p)) { \
-  fprintf(stdout, "\n\aNO MEMORY in file %s:%d\n\n", __FILE__, __LINE__); \
-  exit(1);}
-
+#define CHECK_PTR(p)                                                        \
+  if (NULL == (p))                                                          \
+  {                                                                         \
+    fprintf(stdout, "\n\aNO MEMORY in file %s:%d\n\n", __FILE__, __LINE__); \
+    exit(1);                                                                \
+  }
 
 /* add elapsed time from main local time vars to specified val
  */
-#define TIME( val ) val += ( float ) ( ( end.tms_utime - start.tms_utime + \
-					 end.tms_stime - start.tms_stime  ) / 100.0 )
-
-
-
-
-
-
-
-
-
-
-
+#define TIME(val) val += (float)((end.tms_utime - start.tms_utime +  \
+                                  end.tms_stime - start.tms_stime) / \
+                                 100.0)
 
 /*
  *  ------------------------------ DATA STRUCTURES ----------------------------
  */
 
-
-
-
-
-
-
-
-
-
-
 /*******************
  * GENERAL HELPERS *
  *******************/
 
-
-
-
-
-
-
-
 /* all command switches
  */
-struct _command_line {
+struct _command_line
+{
 
   char path[MAX_LENGTH];
   char ops_file_name[MAX_LENGTH];
@@ -362,62 +216,39 @@ struct _command_line {
   int w;
 
   float cost_bound;
-
 };
 
-
 typedef char *Token;
-
-
-
-
-
-
-
-
-
-
-
 
 /***********
  * PARSING *
  ***********/
 
-
-
-
-
-
-
-
-
-
 /* A list of strings
  */
-typedef struct _TokenList {
+typedef struct _TokenList
+{
 
   char *item;
   struct _TokenList *next;
 
 } TokenList;
 
-
-
 /* list of string lists
  */
-typedef struct _FactList {
+typedef struct _FactList
+{
 
   TokenList *item;
   struct _FactList *next;
 
 } FactList;
 
-
-
 /* structure to store  typed-list-of <name>/<variable>,
  * as they are declared in PDDL files
  */
-typedef struct _TypedList {
+typedef struct _TypedList
+{
 
   char *name;
 
@@ -435,12 +266,11 @@ typedef struct _TypedList {
 
 } TypedList;
 
-
-
 /* only needed to parse in the predicates and their arg
  * definitions
  */
-typedef struct _TypedListList {
+typedef struct _TypedListList
+{
 
   char *predicate;
 
@@ -450,19 +280,19 @@ typedef struct _TypedListList {
 
 } TypedListList;
 
+typedef enum _ExpConnective
+{
+  FHEAD = 1000,
+  NUMBER,
+  MINUS,
+  AD,
+  SU,
+  MU,
+  DI
+} ExpConnective;
 
-
-typedef enum _ExpConnective{FHEAD = 1000,
-			    NUMBER,
-			    MINUS,
-			    AD,
-                            SU, 
-			    MU, 
-			    DI} ExpConnective;
-
-
-
-typedef struct _ParseExpNode {
+typedef struct _ParseExpNode
+{
 
   ExpConnective connective;
 
@@ -479,48 +309,48 @@ typedef struct _ParseExpNode {
 
 } ParseExpNode;
 
-
-
 /* This type indicates whether a node in the pddl tree stands for
- * an atomic expression, a junctor or a quantor. 
+ * an atomic expression, a junctor or a quantor.
  */
-typedef enum _Connective{TRU = 2000,
-			 FAL,
-			 ATOM,
-			 COMP,
-			 NEF,
-			 NOT, 
-			 AND, 
-			 OR, 
-			 ALL, 
-			 EX, 
-			 WHEN} Connective;
+typedef enum _Connective
+{
+  TRU = 2000,
+  FAL,
+  ATOM,
+  COMP,
+  NEF,
+  NOT,
+  AND,
+  OR,
+  ALL,
+  EX,
+  WHEN
+} Connective;
 
+typedef enum _Comparator
+{
+  IGUAL = 3000, /* technical if conds are array comp exp, resp float */
+  LE,
+  LEQ,
+  EQ,
+  GEQ,
+  GE
+} Comparator;
 
-
-typedef enum _Comparator{IGUAL = 3000, /* technical if conds are array comp exp, resp float */
-			 LE,
-			 LEQ,
-			 EQ,
-			 GEQ,
-			 GE} Comparator;
-
-
-
-
-typedef enum _NumericEffectType{ASSIGN = 4000,
-				SCALE_UP,
-				SCALE_DOWN,
-				INCREASE,
-				DECREASE} NumericEffectType;
-
-
-
+typedef enum _NumericEffectType
+{
+  ASSIGN = 4000,
+  SCALE_UP,
+  SCALE_DOWN,
+  INCREASE,
+  DECREASE
+} NumericEffectType;
 
 /*
  * This is a node in the tree to parse PDDL files
  */
-typedef struct _PlNode {
+typedef struct _PlNode
+{
 
   /* type of the node
    */
@@ -556,11 +386,11 @@ typedef struct _PlNode {
 
 } PlNode;
 
-
 /*
  * This resembles an uninstantiated PDDL operator
  */
-typedef struct _PlOperator {
+typedef struct _PlOperator
+{
 
   char *name;
   Bool axiom;
@@ -568,7 +398,7 @@ typedef struct _PlOperator {
   /* only important for PDDL where :VARS may be added to the param list
    * which must be hidden when writing the plan to an output file
    */
-  int number_of_real_params; 
+  int number_of_real_params;
 
   /* the params, as they are declared in domain file
    */
@@ -585,31 +415,9 @@ typedef struct _PlOperator {
 
 } PlOperator;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/***************** 
+/*****************
  * INSTANTIATION *
  *****************/
-
-
-
-
-
-
-
-
 
 /* helpers
  */
@@ -618,38 +426,33 @@ typedef int TypeArray[MAX_TYPE_INTERSECTIONS];
 
 typedef int *int_pointer;
 
-
-
-
 /* first step structures: parsing & preprocessing
  */
 
-typedef struct _Fact {
+typedef struct _Fact
+{
 
   int predicate, args[MAX_ARITY];
 
 } Fact;
 
-
-
-typedef struct _Fluent {
+typedef struct _Fluent
+{
 
   int function, args[MAX_ARITY];
 
 } Fluent;
 
-
-
-typedef struct _FluentValue {
+typedef struct _FluentValue
+{
 
   Fluent fluent;
   float value;
 
 } FluentValue;
 
-
-
-typedef struct _Facts {
+typedef struct _Facts
+{
 
   Fact *fact;
 
@@ -657,9 +460,8 @@ typedef struct _Facts {
 
 } Facts;
 
-
-
-typedef struct _FluentValues {
+typedef struct _FluentValues
+{
 
   Fluent fluent;
   float value;
@@ -668,9 +470,8 @@ typedef struct _FluentValues {
 
 } FluentValues;
 
-
-
-typedef struct _ExpNode {
+typedef struct _ExpNode
+{
 
   ExpConnective connective;
 
@@ -701,9 +502,8 @@ typedef struct _ExpNode {
 
 } ExpNode, *ExpNode_pointer;
 
-
-
-typedef struct _WffNode {
+typedef struct _WffNode
+{
 
   Connective connective;
 
@@ -745,9 +545,8 @@ typedef struct _WffNode {
 
 } WffNode, *WffNode_pointer;
 
-
-
-typedef struct _Literal {
+typedef struct _Literal
+{
 
   Bool negated;
 
@@ -758,9 +557,8 @@ typedef struct _Literal {
 
 } Literal;
 
-
-
-typedef struct _NumericEffect {
+typedef struct _NumericEffect
+{
 
   Fluent fluent;
   NumericEffectType neft;
@@ -772,9 +570,8 @@ typedef struct _NumericEffect {
 
 } NumericEffect;
 
-
-
-typedef struct _Effect {
+typedef struct _Effect
+{
 
   int num_vars, var_types[MAX_VARS];
   char *var_names[MAX_VARS];
@@ -789,17 +586,16 @@ typedef struct _Effect {
 
 } Effect;
 
-
-
-typedef struct _Operator {
+typedef struct _Operator
+{
 
   char *name, *var_names[MAX_VARS];
-  int number_of_real_params; 
+  int number_of_real_params;
   Bool axiom;
 
   int num_vars, var_types[MAX_VARS];
   Bool removed[MAX_VARS];
- 
+
   WffNode *preconds;
 
   Effect *effects;
@@ -808,19 +604,12 @@ typedef struct _Operator {
 
 } Operator, *Operator_pointer;
 
-
-
-
-
-
 /* second step: structures that keep already normalized
  * operators
  */
 
-
-
-
-typedef struct _NormEffect {
+typedef struct _NormEffect
+{
 
   int num_vars, var_types[MAX_VARS];
   int inst_table[MAX_VARS];
@@ -835,7 +624,7 @@ typedef struct _NormEffect {
 
   /* numerical parts: not yet normalized any further; seems that
    * normalizing requires certain additional structures +
-   * transformation, and that these will better be done when 
+   * transformation, and that these will better be done when
    * the representation is fully instantiated already.
    */
   Comparator *numeric_conditions_comp;
@@ -852,10 +641,9 @@ typedef struct _NormEffect {
 
 } NormEffect;
 
+typedef struct _NormOperator
+{
 
-
-typedef struct _NormOperator {
-  
   Operator *operator;
 
   int num_vars, var_types[MAX_VARS];
@@ -875,13 +663,12 @@ typedef struct _NormOperator {
   Bool out;
 
 } NormOperator, *NormOperator_pointer;
-  
-
 
 /* minimal info for a fully instantiated easy operator;
  * yields one action when expanded
  */
-typedef struct _EasyTemplate {
+typedef struct _EasyTemplate
+{
 
   NormOperator *op;
   int inst_table[MAX_VARS];
@@ -891,24 +678,16 @@ typedef struct _EasyTemplate {
 
 } EasyTemplate;
 
-
-
-
-
-
 /* structures for hard ops
  */
-
-
-
-
 
 /* intermediate step: structure for keeping hard ops
  * with normalized precondition, but arbitrary
  * effect conditions
  */
-typedef struct _MixedOperator {
-  
+typedef struct _MixedOperator
+{
+
   Operator *operator;
 
   int inst_table[MAX_VARS];
@@ -927,15 +706,12 @@ typedef struct _MixedOperator {
 
 } MixedOperator;
 
-
-
 /* last hard step: everything is action - like, except that
  * facts are not yet integer coded
- */  
+ */
 
-
-
-typedef struct _PseudoActionEffect {
+typedef struct _PseudoActionEffect
+{
 
   Fact *conditions;
   int num_conditions;
@@ -944,7 +720,6 @@ typedef struct _PseudoActionEffect {
   int num_adds;
   Fact *dels;
   int num_dels;
-
 
   /* and the numeric parts again...
    */
@@ -961,9 +736,8 @@ typedef struct _PseudoActionEffect {
 
 } PseudoActionEffect;
 
-
-
-typedef struct _PseudoAction {
+typedef struct _PseudoAction
+{
 
   Operator *operator;
 
@@ -982,15 +756,11 @@ typedef struct _PseudoAction {
 
 } PseudoAction, *PseudoAction_pointer;
 
-
-
-
 /* final domain representation structure
  */
 
-
-
-typedef struct _LnfExpNode {
+typedef struct _LnfExpNode
+{
 
   int pF[MAX_LNF_F];
   float pC[MAX_LNF_F];
@@ -1004,9 +774,8 @@ typedef struct _LnfExpNode {
 
 } LnfExpNode, *LnfExpNode_pointer;
 
-
-
-typedef struct _ActionEffect {
+typedef struct _ActionEffect
+{
 
   int *conditions;
   int num_conditions;
@@ -1036,7 +805,7 @@ typedef struct _ActionEffect {
   Comparator *lnf_conditions_comp;
   LnfExpNode_pointer *lnf_conditions_lh;
   float *lnf_conditions_rh;
-  int num_lnf_conditions;  
+  int num_lnf_conditions;
 
   NumericEffectType *lnf_effects_neft;
   int *lnf_effects_fl;
@@ -1044,7 +813,7 @@ typedef struct _ActionEffect {
   int num_lnf_effects;
 
   /* this is true iff the numerical part of the effects affects or accesses
-   * an undefined fluent (i.e. in numeric_effects_fl or numeric_effects_rh ) 
+   * an undefined fluent (i.e. in numeric_effects_fl or numeric_effects_rh )
    * --- then, if the effect appears, the action is
    * illegal.
    */
@@ -1058,9 +827,8 @@ typedef struct _ActionEffect {
 
 } ActionEffect;
 
-
-
-typedef struct _Action {
+typedef struct _Action
+{
 
   NormOperator *norm_operator;
   PseudoAction *pseudo_action;
@@ -1077,7 +845,7 @@ typedef struct _Action {
   /* numeric part, in general format, with fluents encoded as fl ints
    *
    * also, will (?) be transformed to lh fl, rh float; then, expnodes as
-   * fast accessible as specialised structures. 
+   * fast accessible as specialised structures.
    */
   Comparator *numeric_preconds_comp;
   ExpNode_pointer *numeric_preconds_lh, *numeric_preconds_rh;
@@ -1097,31 +865,12 @@ typedef struct _Action {
 
 } Action;
 
-
-
-
-
-
-
-
-
-
-
 /*****************************************************
  * BASIC OP AND FT STRUCTURES FOR CONNECTIVITY GRAPH *
  *****************************************************/
 
-
-
-
-
-
-
-
-
-
-
-typedef struct _OpConn {
+typedef struct _OpConn
+{
 
   /* to get name
    */
@@ -1143,7 +892,7 @@ typedef struct _OpConn {
   int is_used;
   Bool is_in_H;
 
-  /* this is a bit imprecise since actually, in this 
+  /* this is a bit imprecise since actually, in this
    * framework here, the cost of the action may depend on
    * which conditional effects actually apply.
    * ... anyway, this makes things much easier for the case
@@ -1154,9 +903,8 @@ typedef struct _OpConn {
 
 } OpConn;
 
-
-
-typedef struct _EfConn {
+typedef struct _EfConn
+{
 
   int op;
 
@@ -1221,8 +969,8 @@ typedef struct _EfConn {
 
   /* members for relaxed fixpoint computation
    */
-  int level;/* first "cost level" where ef appears */
-  float RPGcost;/* max_{p prec} cost(p)+cost(op(ef)) */
+  int level;     /* first "cost level" where ef appears */
+  float RPGcost; /* max_{p prec} cost(p)+cost(op(ef)) */
 
   Bool in_E;
   int num_active_PCs;
@@ -1239,9 +987,8 @@ typedef struct _EfConn {
 
 } EfConn;
 
-
-
-typedef struct _FtConn {
+typedef struct _FtConn
+{
 
   /* effects it is union conds, pres element of
    */
@@ -1263,8 +1010,8 @@ typedef struct _FtConn {
 
   /* members for relaxed fixpoint computation
    */
-  int level;/* first "cost level" where ft appears */
-  float RPGcost;/* min_{e adder} cost(e) */
+  int level;     /* first "cost level" where ft appears */
+  float RPGcost; /* min_{e adder} cost(e) */
   Bool in_F;
 
   /* members for 1Ph extraction
@@ -1275,19 +1022,18 @@ typedef struct _FtConn {
 
   /* search
    */
-  int rand;/* for hashing */
+  int rand; /* for hashing */
 
   /* is this the effect of an axiom?
-   * needed to quickly filter out derived facts, in state 
+   * needed to quickly filter out derived facts, in state
    * transitions!
    */
   Bool axiom_added;
 
 } FtConn;
 
-
-
-typedef struct _FlConn {
+typedef struct _FlConn
+{
 
   /* effects it is union conds, pres required
    */
@@ -1303,7 +1049,7 @@ typedef struct _FlConn {
 
   int *AS;
   int *AS_fl_;
-  float *AS_c;/* see above */
+  float *AS_c; /* see above */
   int num_AS;
 
   /* is it an artificial fluent?
@@ -1315,7 +1061,6 @@ typedef struct _FlConn {
   int *lnf_F;
   float *lnf_C;
   int num_lnf;
-
 
   /* the termination criterion for RPG building is based on mneed, see
    * JAIR article for definition;
@@ -1332,7 +1077,7 @@ typedef struct _FlConn {
   /* the following are members handled within heuristic algorithms.
    */
 
-  /* this are arrays saying what the max value at 
+  /* this are arrays saying what the max value at
    * the levels in the RPG is, resp. whether the value
    * can be defined there at all, resp. what the increasers
    * at that level have added.
@@ -1346,35 +1091,17 @@ typedef struct _FlConn {
   Bool curr_assigned;
   float curr_max_assigned;
 
-  int rand;/* for hashing */
+  int rand; /* for hashing */
 
 } FlConn;
-
-
-
-
-
-
-
-
-
-
-
 
 /****************************
  * STRUCTURES FOR SEARCHING *
  ****************************/
 
+typedef struct _State
+{
 
-
-
-
-
-
-
-
-typedef struct _State {
-  
   int *F;
   int num_F;
 
@@ -1383,10 +1110,9 @@ typedef struct _State {
 
 } State, *State_pointer;
 
+typedef struct _EhcNode
+{
 
-
-typedef struct _EhcNode {
-  
   State S;
 
   int op;
@@ -1397,9 +1123,8 @@ typedef struct _EhcNode {
 
 } EhcNode;
 
-
-
-typedef struct _EhcHashEntry {
+typedef struct _EhcHashEntry
+{
 
   int sum;
 
@@ -1409,9 +1134,8 @@ typedef struct _EhcHashEntry {
 
 } EhcHashEntry, *EhcHashEntry_pointer;
 
-
-
-typedef struct _PlanHashEntry {
+typedef struct _PlanHashEntry
+{
 
   int sum;
   State S;
@@ -1426,10 +1150,9 @@ typedef struct _PlanHashEntry {
 
 } PlanHashEntry, *PlanHashEntry_pointer;
 
+typedef struct _BfsNode
+{
 
-
-typedef struct _BfsNode {
-  
   State S;
   int op;
 
@@ -1441,7 +1164,7 @@ typedef struct _BfsNode {
    */
   int goal_distance;
 
-  /* g-value and h-value, ie summed-up cost to here, 
+  /* g-value and h-value, ie summed-up cost to here,
    * summed-up cost in rplan for here.
    * used in all optimization configs
    */
@@ -1465,9 +1188,8 @@ typedef struct _BfsNode {
 
 } BfsNode;
 
-
-
-typedef struct _BfsHashEntry {
+typedef struct _BfsHashEntry
+{
 
   int sum;
 
@@ -1477,77 +1199,21 @@ typedef struct _BfsHashEntry {
 
 } BfsHashEntry, *BfsHashEntry_pointer;
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*
  *  -------------------------------- MAIN FN HEADERS ----------------------------
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-void output_planner_info( void );
-void ff_usage( void );
-Bool process_command_line( int argc, char *argv[] );
-
-
-
-
-
-
-
-
+void output_planner_info(void);
+void ff_usage(void);
+Bool process_command_line(int argc, char *argv[]);
 
 /*
  *  ----------------------------- GLOBAL VARIABLES ----------------------------
  */
 
-
-
-
-
-
-
-
-
-
-
-
 /*******************
  * GENERAL HELPERS *
  *******************/
-
-
-
-
-
-
-
-
-
 
 /* used to time the different stages of the planner
  */
@@ -1566,27 +1232,9 @@ extern int gevaluated_states;
  */
 extern int gmax_search_depth;
 
-
-
-
-
-
-
-
-
 /***********
  * PARSING *
  ***********/
-
-
-
-
-
-
-
-
-
-
 
 /* used for pddl parsing, flex only allows global variables
  */
@@ -1609,7 +1257,7 @@ extern char *gdomain_name;
  */
 extern PlOperator *gloaded_ops;
 
-/* stores initials as fact_list 
+/* stores initials as fact_list
  */
 extern PlNode *gorig_initial_facts;
 
@@ -1642,11 +1290,10 @@ extern TypedList *gparse_objects;
 extern Token gparse_optimization;
 extern ParseExpNode *gparse_metric;
 
-
 /* connection to instantiation ( except ops, goal, initial )
  */
 
-/* all typed objects 
+/* all typed objects
  */
 extern FactList *gorig_constant_list;
 
@@ -1658,31 +1305,9 @@ extern FactList *gpredicates_and_types;
  */
 extern FactList *gfunctions_and_types;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*****************
  * INSTANTIATING *
  *****************/
-
-
-
-
-
-
-
-
-
 
 /* global arrays of constant names,
  *               type names (with their constants),
@@ -1695,7 +1320,7 @@ extern int gnum_constants;
 extern Token gtype_names[MAX_TYPES];
 extern int gtype_consts[MAX_TYPES][MAX_TYPE];
 extern Bool gis_member[MAX_CONSTANTS][MAX_TYPES];
-extern int gmember_nr[MAX_CONSTANTS][MAX_TYPES];/* nr of object within a type */
+extern int gmember_nr[MAX_CONSTANTS][MAX_TYPES]; /* nr of object within a type */
 extern int gtype_size[MAX_TYPES];
 extern int gnum_types;
 extern Token gpredicates[MAX_PREDICATES];
@@ -1708,9 +1333,6 @@ extern int gf_arity[MAX_FUNCTIONS];
 extern int gfunctions_args_type[MAX_FUNCTIONS][MAX_ARITY];
 extern int gnum_functions;
 
-
-
-
 /* the domain in first step integer representation
  */
 extern Operator_pointer goperators[MAX_OPERATORS];
@@ -1722,8 +1344,6 @@ extern int gnum_full_fluents_initial;
 extern WffNode *ggoal;
 
 extern ExpNode *gmetric;
-
-
 
 /* stores inertia - information: is any occurence of the predicate
  * added / deleted in the uninstantiated ops ?
@@ -1742,8 +1362,6 @@ extern Bool gis_deleted[MAX_PREDICATES];
  */
 extern Bool gis_changed[MAX_FUNCTIONS];
 
-
-
 /* splitted initial state:
  * initial non static facts,
  * initial static facts, divided into predicates
@@ -1761,8 +1379,6 @@ extern int gnum_f_initial;
 extern FluentValue **ginitial_function;
 extern int *gnum_initial_function;
 
-
-
 /* the type numbers corresponding to any unary inertia
  */
 extern int gtype_to_predicate[MAX_PREDICATES];
@@ -1773,8 +1389,6 @@ extern int gpredicate_to_type[MAX_TYPES];
 extern TypeArray gintersected_types[MAX_TYPES];
 extern int gnum_intersected_types[MAX_TYPES];
 
-
-
 /* splitted domain: hard n easy ops
  */
 extern Operator_pointer *ghard_operators;
@@ -1782,15 +1396,11 @@ extern int gnum_hard_operators;
 extern NormOperator_pointer *geasy_operators;
 extern int gnum_easy_operators;
 
-
-
 /* so called Templates for easy ops: possible inertia constrained
  * instantiation constants
  */
 extern EasyTemplate *geasy_templates;
 extern int gnum_easy_templates;
-
-
 
 /* first step for hard ops: create mixed operators, with conjunctive
  * precondition and arbitrary effects
@@ -1798,14 +1408,10 @@ extern int gnum_easy_templates;
 extern MixedOperator *ghard_mixed_operators;
 extern int gnum_hard_mixed_operators;
 
-
-
 /* hard ''templates'' : pseudo actions
  */
 extern PseudoAction_pointer *ghard_templates;
 extern int gnum_hard_templates;
-
-
 
 /* store the final "relevant facts"
  */
@@ -1822,8 +1428,6 @@ extern Token grelevant_fluents_name[MAX_RELEVANT_FLUENTS];
  */
 extern LnfExpNode_pointer grelevant_fluents_lnf[MAX_RELEVANT_FLUENTS];
 
-
-
 /* the final actions and problem representation
  */
 extern Action *gactions;
@@ -1835,15 +1439,11 @@ extern Comparator *gnumeric_goal_comp;
 extern ExpNode_pointer *gnumeric_goal_lh, *gnumeric_goal_rh;
 extern int gnum_numeric_goal;
 
-
-
 /* to avoid memory leaks; too complicated to identify
  * the exact state of the action to throw away (during construction),
  * memory gain not worth the implementation effort.
  */
 extern Action *gtrash_actions;
-
-
 
 /* additional lnf step between finalized inst and
  * conn graph
@@ -1856,44 +1456,30 @@ extern int gnum_lnf_goal;
 extern LnfExpNode glnf_metric;
 extern Bool goptimization_established;
 
-
-
 /**********************
  * CONNECTIVITY GRAPH *
  **********************/
-
-
-
-
 
 /* one ops (actions) array ...
  */
 extern OpConn *gop_conn;
 extern int gnum_op_conn;
 
-
-
 /* one effects array ...
  */
 extern EfConn *gef_conn;
 extern int gnum_ef_conn;
-
-
 
 /* one facts array.
  */
 extern FtConn *gft_conn;
 extern int gnum_ft_conn;
 
-
-
 /* and: one fluents array.
  */
 extern FlConn *gfl_conn;
 extern int gnum_fl_conn;
-extern int gnum_real_fl_conn;/* number of non-artificial ones */
-
-
+extern int gnum_real_fl_conn; /* number of non-artificial ones */
 
 /* final goal is also transformed one more step.
  */
@@ -1909,41 +1495,16 @@ extern int gnum_fnumeric_goal;
 extern Comparator *gfnumeric_goal_direct_comp;
 extern float *gfnumeric_goal_direct_c;
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*******************
  * SEARCHING NEEDS *
  *******************/
 
-
-
-
-
-
-
-
-
-
-
-
 /* applicable actions
  */
-extern int *gA;/* non-axioms */
+extern int *gA; /* non-axioms */
 extern int gnum_A;
 extern int *gA_axioms; /* axioms */
 extern int gnum_A_axioms;
-
-
 
 /* communication from extract 1.P. to search engine:
  * 1P action choice
@@ -1957,29 +1518,18 @@ extern float gh_cost;
  */
 extern float ghmax;
 
-
-
 /* to store plan
  */
 extern int gplan_ops[MAX_PLAN_LENGTH];
 extern int gnum_plan_ops;
 
-
-
 /* stores the states that the current plan goes through
  */
 extern State gplan_states[MAX_PLAN_LENGTH + 1];
 
-
-
 /* dirty: multiplic. of total-time in final metric LNF
  */
 extern float gtt;
-
-
-
-
-
 
 /* the mneed structures
  *
@@ -1988,14 +1538,10 @@ extern float gtt;
 extern Bool **gassign_influence;
 extern Bool **gTassign_influence;
 
-
-
 /* the real var input to the mneed computation.
  */
 extern Bool *gmneed_start_D;
 extern float *gmneed_start_V;
-
-
 
 /* does this contain conditional effects?
  * (if it does then the state hashing has to be made more
@@ -2003,11 +1549,9 @@ extern float *gmneed_start_V;
  */
 extern Bool gconditional_effects;
 
-
 /* easier to question: are we optimizing or no?
  */
 extern Bool gcost_minimizing;
-
 
 /* stores current A* weight: this is initially given by user,
  * but changes during anytime search.
@@ -2018,7 +1562,6 @@ extern float gw;
  * if no such minim weight is given, this will be -1
  */
 extern float gmin_w;
-
 
 /* this one says whether or not we are actually using
  * cost-minimizing rplans.
@@ -2038,5 +1581,4 @@ extern float gmin_w;
  */
 extern Bool gcost_rplans;
 
-
-#endif 
+#endif

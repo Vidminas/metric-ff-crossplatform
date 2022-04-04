@@ -4,35 +4,28 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- * 
+ *
  *********************************************************************/
 
 /*********************************************************************
  * File: main.c
  * Description: The main routine for the Metric-FastForward Planner.
- *              Modified July 2011 to allow more command-line search 
+ *              Modified July 2011 to allow more command-line search
  *              confiogurations, including improved cost-minimization
  *
  * Author: original version Joerg Hoffmann 2001/2002
  *         modified version Joerg Hoffmann 2012
- * 
- *********************************************************************/ 
-
-
-
-
-
-
-
+ *
+ *********************************************************************/
 
 #include "ff.h"
 
@@ -51,47 +44,18 @@
 #include "relax.h"
 #include "search.h"
 
-
-
-
-
-
-
-
-
-
-
 /*
  *  ----------------------------- GLOBAL VARIABLES ----------------------------
  */
-
-
-
-
-
-
-
-
-
-
-
 
 /*******************
  * GENERAL HELPERS *
  *******************/
 
-
-
-
-
-
-
-
 /* used to time the different stages of the planner
  */
 float gtempl_time = 0, greach_time = 0, grelev_time = 0, gconn_time = 0;
 float gLNF_time = 0, gsearch_time = 0;
-
 
 /* the command line inputs
  */
@@ -105,19 +69,9 @@ int gevaluated_states = 0;
  */
 int gmax_search_depth = 0;
 
-
-
-
-
 /***********
  * PARSING *
  ***********/
-
-
-
-
-
-
 
 /* used for pddl parsing, flex only allows global variables
  */
@@ -140,7 +94,7 @@ char *gdomain_name = NULL;
  */
 PlOperator *gloaded_ops = NULL;
 
-/* stores initials as fact_list 
+/* stores initials as fact_list
  */
 PlNode *gorig_initial_facts = NULL;
 
@@ -177,11 +131,10 @@ TypedList *gparse_objects = NULL;
 Token gparse_optimization;
 ParseExpNode *gparse_metric = NULL;
 
-
 /* connection to instantiation ( except ops, goal, initial )
  */
 
-/* all typed objects 
+/* all typed objects
  */
 FactList *gorig_constant_list = NULL;
 
@@ -193,28 +146,9 @@ FactList *gpredicates_and_types = NULL;
  */
 FactList *gfunctions_and_types = NULL;
 
-
-
-
-
-
-
-
-
-
-
-
 /*****************
  * INSTANTIATING *
  *****************/
-
-
-
-
-
-
-
-
 
 /* global arrays of constant names,
  *               type names (with their constants),
@@ -227,7 +161,7 @@ int gnum_constants = 0;
 Token gtype_names[MAX_TYPES];
 int gtype_consts[MAX_TYPES][MAX_TYPE];
 Bool gis_member[MAX_CONSTANTS][MAX_TYPES];
-int gmember_nr[MAX_CONSTANTS][MAX_TYPES];/* nr of object within a type */
+int gmember_nr[MAX_CONSTANTS][MAX_TYPES]; /* nr of object within a type */
 int gtype_size[MAX_TYPES];
 int gnum_types = 0;
 Token gpredicates[MAX_PREDICATES];
@@ -239,10 +173,6 @@ Token gfunctions[MAX_FUNCTIONS];
 int gf_arity[MAX_FUNCTIONS];
 int gfunctions_args_type[MAX_FUNCTIONS][MAX_ARITY];
 int gnum_functions = 0;
-
-
-
-
 
 /* the domain in integer (Fact) representation
  */
@@ -256,14 +186,11 @@ WffNode *ggoal = NULL;
 
 ExpNode *gmetric = NULL;
 
-
-
 /* stores inertia - information: is any occurence of the predicate
  * added / deleted in the uninstantiated ops ?
  */
 Bool gis_added[MAX_PREDICATES];
 Bool gis_deleted[MAX_PREDICATES];
-
 
 /* for functions we *might* want to say, symmetrically, whether it is
  * increased resp. decreased at all.
@@ -275,8 +202,6 @@ Bool gis_deleted[MAX_PREDICATES];
  * thus (for the time being), we settle for "is the function changed at all?"
  */
 Bool gis_changed[MAX_FUNCTIONS];
-
-
 
 /* splitted initial state:
  * initial non static facts,
@@ -295,8 +220,6 @@ int gnum_f_initial = 0;
 FluentValue **ginitial_function;
 int *gnum_initial_function;
 
-
-
 /* the type numbers corresponding to any unary inertia
  */
 int gtype_to_predicate[MAX_PREDICATES];
@@ -307,8 +230,6 @@ int gpredicate_to_type[MAX_TYPES];
 TypeArray gintersected_types[MAX_TYPES];
 int gnum_intersected_types[MAX_TYPES];
 
-
-
 /* splitted domain: hard n easy ops
  */
 Operator_pointer *ghard_operators;
@@ -316,15 +237,11 @@ int gnum_hard_operators;
 NormOperator_pointer *geasy_operators;
 int gnum_easy_operators;
 
-
-
 /* so called Templates for easy ops: possible inertia constrained
  * instantiation constants
  */
 EasyTemplate *geasy_templates;
 int gnum_easy_templates;
-
-
 
 /* first step for hard ops: create mixed operators, with conjunctive
  * precondition and arbitrary effects
@@ -332,14 +249,10 @@ int gnum_easy_templates;
 MixedOperator *ghard_mixed_operators;
 int gnum_hard_mixed_operators;
 
-
-
 /* hard ''templates'' : pseudo actions
  */
 PseudoAction_pointer *ghard_templates;
 int gnum_hard_templates;
-
-
 
 /* store the final "relevant facts"
  */
@@ -355,8 +268,6 @@ Token grelevant_fluents_name[MAX_RELEVANT_FLUENTS];
  * artificial fluents.
  */
 LnfExpNode_pointer grelevant_fluents_lnf[MAX_RELEVANT_FLUENTS];
-
-
 
 /* the final actions and problem representation
  */
@@ -374,15 +285,11 @@ int gnum_numeric_goal = 0;
 Comparator *gnumeric_goal_direct_comp;
 float *gnumeric_goal_direct_c;
 
-
-
 /* to avoid memory leaks; too complicated to identify
  * the exact state of the action to throw away (during construction),
  * memory gain not worth the implementation effort.
  */
 Action *gtrash_actions = NULL;
-
-
 
 /* additional lnf step between finalized inst and
  * conn graph
@@ -395,50 +302,30 @@ int gnum_lnf_goal = 0;
 LnfExpNode glnf_metric;
 Bool goptimization_established = FALSE;
 
-
-
-
-
-
-
 /**********************
  * CONNECTIVITY GRAPH *
  **********************/
-
-
-
-
-
-
 
 /* one ops (actions) array ...
  */
 OpConn *gop_conn;
 int gnum_op_conn;
 
-
-
 /* one effects array ...
  */
 EfConn *gef_conn;
 int gnum_ef_conn;
-
-
 
 /* one facts array.
  */
 FtConn *gft_conn;
 int gnum_ft_conn;
 
-
-
 /* and: one fluents array.
  */
 FlConn *gfl_conn;
 int gnum_fl_conn;
-int gnum_real_fl_conn;/* number of non-artificial ones */
-
-
+int gnum_real_fl_conn; /* number of non-artificial ones */
 
 /* final goal is also transformed one more step.
  */
@@ -454,38 +341,16 @@ int gnum_fnumeric_goal = 0;
 Comparator *gfnumeric_goal_direct_comp = NULL;
 float *gfnumeric_goal_direct_c = NULL;
 
-
-
-
-
-
-
-
-
-
-
 /*******************
  * SEARCHING NEEDS *
  *******************/
 
-
-
-
-
-
-
-
-
-
-
 /* applicable actions
  */
-int *gA;/* non-axioms */
+int *gA; /* non-axioms */
 int gnum_A;
 int *gA_axioms; /* axioms */
 int gnum_A_axioms;
-
-
 
 /* communication from extract 1.P. to search engine:
  * 1P action choice
@@ -499,49 +364,29 @@ float gh_cost;
  */
 float ghmax;
 
-
-
 /* to store plan
  */
 int gplan_ops[MAX_PLAN_LENGTH];
 int gnum_plan_ops = 0;
-
-
 
 /* stores the states that the current plan goes through
  * ( for knowing where new agenda entry starts from )
  */
 State gplan_states[MAX_PLAN_LENGTH + 1];
 
-
-
-
-
-
-
 /* dirty: multiplic. of total-time in final metric LNF
  */
 float gtt;
-
-
-
-
-
-
 
 /* the mneed structures
  */
 Bool **gassign_influence;
 Bool **gTassign_influence;
 
-
-
 /* the real var input to the mneed computation.
  */
 Bool *gmneed_start_D;
 float *gmneed_start_V;
-
-
 
 /* does this contain conditional effects?
  * (if it does then the state hashing has to be made more
@@ -549,13 +394,9 @@ float *gmneed_start_V;
  */
 Bool gconditional_effects;
 
-
-
 /* easier to question: are we optimizing or no?
  */
 Bool gcost_minimizing;
-
-
 
 /* stores current A* weight: this is initially given by user,
  * but changes during anytime search.
@@ -566,8 +407,6 @@ float gw;
  * if no such minim weight is given, this will be -1
  */
 float gmin_w = -1;
-
-
 
 /* this one says whether or not we are actually using
  * cost-minimizing rplans.
@@ -587,68 +426,32 @@ float gmin_w = -1;
  */
 Bool gcost_rplans;
 
-
-
-
-
-
-
-
-
-
-
-
-
 /*
  *  ----------------------------- HEADERS FOR PARSING ----------------------------
  * ( fns defined in the scan-* files )
  */
 
-
-
-
-
-
-
-void get_fct_file_name( char *filename );
-void load_ops_file( char *filename );
-void load_fct_file( char *filename );
-
-
-
-
-
-
-
-
-
-
+void get_fct_file_name(char *filename);
+void load_ops_file(char *filename);
+void load_fct_file(char *filename);
 
 /*
  *  ----------------------------- MAIN ROUTINE ----------------------------
  */
 
-
-
-
-
 struct tms lstart, lend;
 
-
-
-
-
-int main( int argc, char *argv[] )
+int main(int argc, char *argv[])
 
 {
 
   /* resulting name for ops file
    */
   char ops_file[MAX_LENGTH] = "";
-  /* same for fct file 
+  /* same for fct file
    */
   char fct_file[MAX_LENGTH] = "";
-  
+
   struct tms start, end;
 
   Bool found_plan;
@@ -657,9 +460,7 @@ int main( int argc, char *argv[] )
 
   Bool prev_gcost_rplans;
 
-
-
-  times ( &lstart );
+  times(&lstart);
 
   /* command line treatment
    */
@@ -672,61 +473,65 @@ int main( int argc, char *argv[] )
   gcmd_line.cost_rplans = TRUE;
   gcmd_line.w = 5;
   gcmd_line.cost_bound = -1;
-  
+
   memset(gcmd_line.ops_file_name, 0, MAX_LENGTH);
   memset(gcmd_line.fct_file_name, 0, MAX_LENGTH);
   memset(gcmd_line.path, 0, MAX_LENGTH);
 
-  if ( argc == 1 || ( argc == 2 && *++argv[0] == '?' ) ) {
+  if (argc == 1 || (argc == 2 && *++argv[0] == '?'))
+  {
     ff_usage();
-    exit( 1 );
+    exit(1);
   }
-  if ( !process_command_line( argc, argv ) ) {
+  if (!process_command_line(argc, argv))
+  {
     ff_usage();
-    exit( 1 );
+    exit(1);
   }
-
 
   /* make file names
    */
 
   /* one input name missing
    */
-  if ( !gcmd_line.ops_file_name || 
-       !gcmd_line.fct_file_name ) {
+  if (!gcmd_line.ops_file_name ||
+      !gcmd_line.fct_file_name)
+  {
     fprintf(stdout, "\nff: two input files needed\n\n");
-    ff_usage();      
-    exit( 1 );
+    ff_usage();
+    exit(1);
   }
   /* add path info, complete file names will be stored in
-   * ops_file and fct_file 
+   * ops_file and fct_file
    */
   sprintf(ops_file, "%s%s", gcmd_line.path, gcmd_line.ops_file_name);
   sprintf(fct_file, "%s%s", gcmd_line.path, gcmd_line.fct_file_name);
-
 
   /* parse the input files
    */
 
   /* start parse & instantiation timing
    */
-  times( &start );
+  times(&start);
   /* domain file (ops)
    */
-  if ( gcmd_line.display_info >= 1 ) {
+  if (gcmd_line.display_info >= 1)
+  {
     printf("\nff: parsing domain file");
-  } 
-  /* it is important for the pddl language to define the domain before 
-   * reading the problem 
-   */
-  load_ops_file( ops_file );
-  /* problem file (facts)
-   */  
-  if ( gcmd_line.display_info >= 1 ) {
-    printf(" ... done.\nff: parsing problem file"); 
   }
-  load_fct_file( fct_file );
-  if ( gcmd_line.display_info >= 1 ) {
+  /* it is important for the pddl language to define the domain before
+   * reading the problem
+   */
+  load_ops_file(ops_file);
+  /* problem file (facts)
+   */
+  if (gcmd_line.display_info >= 1)
+  {
+    printf(" ... done.\nff: parsing problem file");
+  }
+  load_fct_file(fct_file);
+  if (gcmd_line.display_info >= 1)
+  {
     printf(" ... done.\n\n");
   }
 
@@ -736,22 +541,21 @@ int main( int argc, char *argv[] )
 
   /* last step of parsing: see if it's an ADL domain!
    */
-  if ( !make_adl_domain() ) {
+  if (!make_adl_domain())
+  {
     printf("\nff: this is not an ADL problem!");
     printf("\n    can't be handled by this version.\n\n");
-    exit( 1 );
+    exit(1);
   }
-
 
   /* now instantiate operators;
    */
 
-
   /**************************
-   * first do PREPROCESSING * 
+   * first do PREPROCESSING *
    **************************/
 
-  /* start by collecting all strings and thereby encoding 
+  /* start by collecting all strings and thereby encoding
    * the domain in integers.
    */
   encode_domain_in_integers();
@@ -779,7 +583,7 @@ int main( int argc, char *argv[] )
   translate_negative_preconds();
 
   /* split domain in easy (disjunction of conjunctive preconds)
-   * and hard (non DNF preconds) part, to apply 
+   * and hard (non DNF preconds) part, to apply
    * different instantiation algorithms
    */
   split_domain();
@@ -793,42 +597,42 @@ int main( int argc, char *argv[] )
   build_easy_action_templates();
   build_hard_action_templates();
 
-  times( &end );
-  TIME( gtempl_time );
+  times(&end);
+  TIME(gtempl_time);
 
-  times( &start );
+  times(&start);
 
-  /* perform reachability analysis in terms of relaxed 
+  /* perform reachability analysis in terms of relaxed
    * fixpoint
    */
   perform_reachability_analysis();
 
-  times( &end );
-  TIME( greach_time );
+  times(&end);
+  TIME(greach_time);
 
-  times( &start );
+  times(&start);
 
   /* collect the relevant facts and build final domain
    * and problem representations.
    */
   collect_relevant_facts_and_fluents();
 
-  times( &end );
-  TIME( grelev_time );
-
+  times(&end);
+  TIME(grelev_time);
 
   /* now transform problem to additive normal form,
    * if possible
    */
-  times( &start );
-  if ( !transform_to_LNF() ) {
+  times(&start);
+  if (!transform_to_LNF())
+  {
     printf("\n\nThis is not a linear task!\n\n");
-    exit( 1 );
+    exit(1);
   }
-  times( &end );
-  TIME( gLNF_time );
-  
-  times( &start );
+  times(&end);
+  TIME(gLNF_time);
+
+  times(&start);
 
   /* now build globally accessable connectivity graph
    */
@@ -841,129 +645,164 @@ int main( int argc, char *argv[] )
    */
   determine_fl_relevance();
 
-  times( &end );
-  TIME( gconn_time );
+  times(&end);
+  TIME(gconn_time);
 
   /***********************************************************
    * we are finally through with preprocessing and can worry *
    * bout finding a plan instead.                            *
    ***********************************************************/
 
-  if ( gcmd_line.display_info ) {
+  if (gcmd_line.display_info)
+  {
     printf("\n\nff: search configuration is ");
-    switch ( gcmd_line.search_config ) {
+    switch (gcmd_line.search_config)
+    {
     case 0:
       printf("Enforced Hill-Climbing, if that fails then best-first search.\nMetric is plan length.");
       printf("\nNO COST MINIMIZATION");
-      if ( !gcost_rplans ) {
-	printf(" (and no cost-minimizing relaxed plans).");
-      } else {
-	printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
-	exit( 1 );
+      if (!gcost_rplans)
+      {
+        printf(" (and no cost-minimizing relaxed plans).");
+      }
+      else
+      {
+        printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
+        exit(1);
       }
       break;
     case 1:
       printf("best-first search.\nMetric is plan length.");
       printf("\nNO COST MINIMIZATION");
-      if ( !gcost_rplans ) {
-	printf(" (and no cost-minimizing relaxed plans).");
-      } else {
-	printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
-	exit( 1 );
+      if (!gcost_rplans)
+      {
+        printf(" (and no cost-minimizing relaxed plans).");
+      }
+      else
+      {
+        printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
+        exit(1);
       }
       break;
     case 2:
       printf("best-first search with helpful actions pruning.\nMetric is plan length.");
       printf("\nNO COST MINIMIZATION.");
-      if ( !gcost_rplans ) {
-	printf(" (and no cost-minimizing relaxed plans).");
-      } else {
-	printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
-	exit( 1 );
+      if (!gcost_rplans)
+      {
+        printf(" (and no cost-minimizing relaxed plans).");
+      }
+      else
+      {
+        printf("\nDEBUG ME: cost min rplans in non-cost minimizing search config?\n\n");
+        exit(1);
       }
       break;
     case 3:
       printf("weighted A* with weight %d.", gcmd_line.w);
-      if ( goptimization_established ) {
-	printf("\nMetric is ");
-	print_LnfExpNode( &glnf_metric );
-      } else {
-	printf(" plan length");
+      if (goptimization_established)
+      {
+        printf("\nMetric is ");
+        print_LnfExpNode(&glnf_metric);
+      }
+      else
+      {
+        printf(" plan length");
       }
       printf("\nCOST MINIMIZATION DONE");
-      if ( !gcost_rplans ) {
-	printf(" (WITHOUT cost-minimizing relaxed plans).");
-      } else {
-	printf(" (WITH cost-minimizing relaxed plans).");
+      if (!gcost_rplans)
+      {
+        printf(" (WITHOUT cost-minimizing relaxed plans).");
+      }
+      else
+      {
+        printf(" (WITH cost-minimizing relaxed plans).");
       }
       break;
     case 4:
       printf("A*epsilon with weight %d.", gcmd_line.w);
-      if ( goptimization_established ) {
-	printf("\nMetric is ");
-	print_LnfExpNode( &glnf_metric );
-      } else {
-	printf("\nError! Optimization criterion not established.\nA*epsilon not defined.\n\n");
-	exit( 1 );
+      if (goptimization_established)
+      {
+        printf("\nMetric is ");
+        print_LnfExpNode(&glnf_metric);
+      }
+      else
+      {
+        printf("\nError! Optimization criterion not established.\nA*epsilon not defined.\n\n");
+        exit(1);
       }
       printf("\nCOST MINIMIZATION DONE");
-      if ( !gcost_rplans ) {
-	printf(" (WITHOUT cost-minimizing relaxed plans).");
-      } else {
-	printf(" (WITH cost-minimizing relaxed plans).");
+      if (!gcost_rplans)
+      {
+        printf(" (WITHOUT cost-minimizing relaxed plans).");
+      }
+      else
+      {
+        printf(" (WITH cost-minimizing relaxed plans).");
       }
       break;
     case 5:
       printf("Enforced Hill-Climbing, then A*epsilon with weight %d.", gcmd_line.w);
-      if ( goptimization_established ) {
-	printf("\nMetric is ");
-	print_LnfExpNode( &glnf_metric );
-      } else {
-	printf("\nError! Optimization criterion not established.\nA*epsilon not defined.\n\n");
-	exit( 1 );
+      if (goptimization_established)
+      {
+        printf("\nMetric is ");
+        print_LnfExpNode(&glnf_metric);
+      }
+      else
+      {
+        printf("\nError! Optimization criterion not established.\nA*epsilon not defined.\n\n");
+        exit(1);
       }
       printf("\nCOST MINIMIZATION DONE");
-      if ( !gcost_rplans ) {
-	printf(" (WITHOUT cost-minimizing relaxed plans).");
-      } else {
-	printf(" (WITH cost-minimizing relaxed plans).");
+      if (!gcost_rplans)
+      {
+        printf(" (WITHOUT cost-minimizing relaxed plans).");
+      }
+      else
+      {
+        printf(" (WITH cost-minimizing relaxed plans).");
       }
       break;
     default:
-      printf("\n\nUnknown search configuration: %d\n\n", gcmd_line.search_config );
-      exit( 1 );
+      printf("\n\nUnknown search configuration: %d\n\n", gcmd_line.search_config);
+      exit(1);
     }
-  } else {
-    if ( gcmd_line.search_config == 4 && !goptimization_established ) {
-      exit( 1 );
+  }
+  else
+  {
+    if (gcmd_line.search_config == 4 && !goptimization_established)
+    {
+      exit(1);
     }
   }
 
-
-  times( &start );
-
-
+  times(&start);
 
   /* need to evaluate derived predicates in initial state!
    */
-  do_axiom_update( &ginitial_state );
+  do_axiom_update(&ginitial_state);
 
-
-  if ( !gcost_rplans ) {
+  if (!gcost_rplans)
+  {
     gcmd_line.cost_bound = -1;
   }
 
-  switch ( gcmd_line.search_config ) {
+  switch (gcmd_line.search_config)
+  {
   case 0:
     found_plan = do_enforced_hill_climbing();
-    if ( found_plan ) {
-      if ( gcmd_line.display_info ) {
-	print_plan();
+    if (found_plan)
+    {
+      if (gcmd_line.display_info)
+      {
+        print_plan();
       }
-    } else {
-      if ( gcmd_line.display_info ) {
-	printf("\n\nEnforced Hill-climbing failed !");
-	printf("\nswitching to Best-first Search now.\n");
+    }
+    else
+    {
+      if (gcmd_line.display_info)
+      {
+        printf("\n\nEnforced Hill-climbing failed !");
+        printf("\nswitching to Best-first Search now.\n");
       }
       do_best_first_search();
     }
@@ -992,12 +831,16 @@ int main( int argc, char *argv[] )
     gcost_rplans = FALSE;
     gcost_minimizing = FALSE;
     found_plan = do_enforced_hill_climbing();
-    if ( found_plan ) {
+    if (found_plan)
+    {
       print_plan();
-    } else {
-      if ( gcmd_line.display_info ) {
-	printf("\n\nEnforced Hill-climbing not successful.");
-	printf("\nSwitching to A*epsilon now.");
+    }
+    else
+    {
+      if (gcmd_line.display_info)
+      {
+        printf("\n\nEnforced Hill-climbing not successful.");
+        printf("\nSwitching to A*epsilon now.");
       }
       gcost_rplans = prev_gcost_rplans;
       gcost_minimizing = TRUE;
@@ -1005,75 +848,48 @@ int main( int argc, char *argv[] )
     }
     break;
   default:
-    printf("\n\nUnknown search configuration: %d\n\n", gcmd_line.search_config );
-    exit( 1 );
+    printf("\n\nUnknown search configuration: %d\n\n", gcmd_line.search_config);
+    exit(1);
   }
 
-  times( &end );
-  TIME( gsearch_time );
-
-
+  times(&end);
+  TIME(gsearch_time);
 
   output_planner_info();
 
   printf("\n\n");
-  exit( 0 );
-
+  exit(0);
 }
-
-
-
-
-
-
-
-
-
-
 
 /*
  *  ----------------------------- HELPING FUNCTIONS ----------------------------
  */
 
-
-
-
-
-
-
-
-
-
-
-
-void output_planner_info( void )
+void output_planner_info(void)
 
 {
 
-  printf( "\n\ntime spent: %7.2f seconds instantiating %d easy, %d hard action templates", 
-	  gtempl_time, gnum_easy_templates, gnum_hard_mixed_operators );
-  printf( "\n            %7.2f seconds reachability analysis, yielding %d facts and %d actions", 
-	  greach_time, gnum_pp_facts, gnum_actions );
-  printf( "\n            %7.2f seconds creating final representation with %d relevant facts, %d relevant fluents", 
-	  grelev_time, gnum_relevant_facts, gnum_relevant_fluents );
-  printf( "\n            %7.2f seconds computing LNF",
-	  gLNF_time );
-  printf( "\n            %7.2f seconds building connectivity graph",
-	  gconn_time );
-  printf( "\n            %7.2f seconds searching, evaluating %d states, to a max depth of %d", 
-	  gsearch_time, gevaluated_states, gmax_search_depth );
-  printf( "\n            %7.2f seconds total time", 
-	  gtempl_time + greach_time + grelev_time + gLNF_time + gconn_time + gsearch_time );
+  printf("\n\ntime spent: %7.2f seconds instantiating %d easy, %d hard action templates",
+         gtempl_time, gnum_easy_templates, gnum_hard_mixed_operators);
+  printf("\n            %7.2f seconds reachability analysis, yielding %d facts and %d actions",
+         greach_time, gnum_pp_facts, gnum_actions);
+  printf("\n            %7.2f seconds creating final representation with %d relevant facts, %d relevant fluents",
+         grelev_time, gnum_relevant_facts, gnum_relevant_fluents);
+  printf("\n            %7.2f seconds computing LNF",
+         gLNF_time);
+  printf("\n            %7.2f seconds building connectivity graph",
+         gconn_time);
+  printf("\n            %7.2f seconds searching, evaluating %d states, to a max depth of %d",
+         gsearch_time, gevaluated_states, gmax_search_depth);
+  printf("\n            %7.2f seconds total time",
+         gtempl_time + greach_time + grelev_time + gLNF_time + gconn_time + gsearch_time);
 
   printf("\n\n");
 
-  exit( 0 );
-
+  exit(0);
 }
 
-
-
-void ff_usage( void )
+void ff_usage(void)
 
 {
 
@@ -1099,7 +915,8 @@ void ff_usage( void )
 
   printf("-b <float>  Fixed upper bound on solution cost (prune based on g+hmax); active only with cost minimization\n\n");
 
-  if ( 0 ) {
+  if (0)
+  {
     printf("-i <num>    run-time information level( preset: 1 )\n");
     printf("      0     only times\n");
     printf("      1     problem name, planning process infos\n");
@@ -1131,100 +948,108 @@ void ff_usage( void )
     printf("    126     fixpoint result on each evaluated state\n");
     printf("    127     1P extracted on each evaluated state\n");
     printf("    128     H set collected for each evaluated state\n");
-    
+
     printf("\n-d <num>    switch on debugging\n\n");
   }
-
 }
 
-
-
-Bool process_command_line( int argc, char *argv[] )
+Bool process_command_line(int argc, char *argv[])
 
 {
 
   char option;
 
-  while ( --argc && ++argv ) {
-    if ( *argv[0] != '-' || strlen(*argv) != 2 ) {
+  while (--argc && ++argv)
+  {
+    if (*argv[0] != '-' || strlen(*argv) != 2)
+    {
       return FALSE;
     }
     option = *++argv[0];
-    switch ( option ) {
-/*     case 'E': */
-/*       gcmd_line.ehc = FALSE; */
-/*       break; */
-/*     case 'O': */
-/*       gcmd_line.optimize = TRUE; */
-/*       gcmd_line.ehc = FALSE; */
-/*       break;       */
+    switch (option)
+    {
+      /*     case 'E': */
+      /*       gcmd_line.ehc = FALSE; */
+      /*       break; */
+      /*     case 'O': */
+      /*       gcmd_line.optimize = TRUE; */
+      /*       gcmd_line.ehc = FALSE; */
+      /*       break;       */
     case 'C':
       gcmd_line.cost_rplans = FALSE;
       break;
     default:
-      if ( --argc && ++argv ) {
-	switch ( option ) {
-	case 'p':
-	  strncpy( gcmd_line.path, *argv, MAX_LENGTH );
-	  break;
-	case 'o':
-	  strncpy( gcmd_line.ops_file_name, *argv, MAX_LENGTH );
-	  break;
-	case 'f':
-	  strncpy( gcmd_line.fct_file_name, *argv, MAX_LENGTH );
-	  break;
-	case 'i':
-	  sscanf( *argv, "%d", &gcmd_line.display_info );
-	  break;
-	case 'd':
-	  sscanf( *argv, "%d", &gcmd_line.debug );
-	  break;
-	case 's':
-	  sscanf( *argv, "%d", &gcmd_line.search_config );
-	  break;
-	case 'w':
-	  sscanf( *argv, "%d", &gcmd_line.w );
-	  break;
-	case 'b':
-	  sscanf( *argv, "%f", &gcmd_line.cost_bound );
-	  break;
-	default:
-	  printf( "\nff: unknown option: %c entered\n\n", option );
-	  return FALSE;
-	}
-      } else {
-	return FALSE;
+      if (--argc && ++argv)
+      {
+        switch (option)
+        {
+        case 'p':
+          strncpy(gcmd_line.path, *argv, MAX_LENGTH);
+          break;
+        case 'o':
+          strncpy(gcmd_line.ops_file_name, *argv, MAX_LENGTH);
+          break;
+        case 'f':
+          strncpy(gcmd_line.fct_file_name, *argv, MAX_LENGTH);
+          break;
+        case 'i':
+          sscanf(*argv, "%d", &gcmd_line.display_info);
+          break;
+        case 'd':
+          sscanf(*argv, "%d", &gcmd_line.debug);
+          break;
+        case 's':
+          sscanf(*argv, "%d", &gcmd_line.search_config);
+          break;
+        case 'w':
+          sscanf(*argv, "%d", &gcmd_line.w);
+          break;
+        case 'b':
+          sscanf(*argv, "%f", &gcmd_line.cost_bound);
+          break;
+        default:
+          printf("\nff: unknown option: %c entered\n\n", option);
+          return FALSE;
+        }
+      }
+      else
+      {
+        return FALSE;
       }
     }
   }
 
-  if ( 0 > gcmd_line.search_config || gcmd_line.search_config > 5 ) {
-    printf("\n\nff: unknown search configuration %d.\n\n", 
-	   gcmd_line.search_config);
+  if (0 > gcmd_line.search_config || gcmd_line.search_config > 5)
+  {
+    printf("\n\nff: unknown search configuration %d.\n\n",
+           gcmd_line.search_config);
     return FALSE;
   }
 
-  if ( gcmd_line.search_config <= 2 ) {
+  if (gcmd_line.search_config <= 2)
+  {
     gcost_minimizing = FALSE;
     gcost_rplans = FALSE;
-  } else {
+  }
+  else
+  {
     gcost_minimizing = TRUE;
     gcost_rplans = TRUE;
   }
 
   gw = gcmd_line.w;
 
-  if ( !gcmd_line.cost_rplans ) {
+  if (!gcmd_line.cost_rplans)
+  {
     gcost_rplans = FALSE;
   }
 
-  if ( gcmd_line.cost_bound != -1 && gcmd_line.cost_bound < 0 ) {
-    printf("\n\nff: invalid cost bound %f; must be >= 0.\n\n", 
-	   gcmd_line.cost_bound);
+  if (gcmd_line.cost_bound != -1 && gcmd_line.cost_bound < 0)
+  {
+    printf("\n\nff: invalid cost bound %f; must be >= 0.\n\n",
+           gcmd_line.cost_bound);
     return FALSE;
   }
 
   return TRUE;
-
 }
-
