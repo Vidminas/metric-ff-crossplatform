@@ -10,16 +10,18 @@
 #define __need_clock_t
 #include <time.h>
 
-// from <winsock2.h>
+#ifndef __MINGW32__
+/* from <winsock2.h> */
 typedef struct timeval
 {
   long tv_sec;
   long tv_usec;
 } TIMEVAL, *PTIMEVAL, *LPTIMEVAL;
+#endif /* __MING32__ */
 
 int gettimeofday(struct timeval *t, void *timezone);
 
-// from linux's sys/times.h
+/* from linux's sys/times.h */
 
 /* Structure describing CPU time used by a process and its children.  */
 struct tms
@@ -39,6 +41,6 @@ clock_t times(struct tms *__buffer);
 
 typedef long long suseconds_t;
 
-#endif // _WIN32
+#endif /* _WIN32 */
 
-#endif // _TIMES_H
+#endif /* _TIMES_H */

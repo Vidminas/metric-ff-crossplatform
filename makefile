@@ -4,7 +4,7 @@
 
 ####### FLAGS
 
-CC      = clang
+CC      = gcc
 CFLAGS	= -O3 -std=c89
 
 ifeq ($(OS), Windows_NT)
