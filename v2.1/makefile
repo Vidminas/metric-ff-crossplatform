@@ -8,12 +8,12 @@ CC      = gcc
 CFLAGS	= -O3 -std=c89
 
 ifeq ($(OS), Windows_NT)
-	OUT_FILE=ff.exe
+	OUT_FILE=../ff-v2.1.exe
 	LIBS= 
-	FLEX=./win_flex --wincompat
-	BISON=./win_bison
+	FLEX=../win_flex --wincompat
+	BISON=../win_bison
 else
-	OUT_FILE=ff
+	OUT_FILE=../ff-v2.1
 	LIBS=-lm
 	FLEX=flex
 	BISON=bison
