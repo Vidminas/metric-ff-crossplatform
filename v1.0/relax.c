@@ -8,46 +8,33 @@
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
- * 
+ *
  *********************************************************************/
 
-
-
-
 /*
- * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND, 
- * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH 
- * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL 
+ * THIS SOURCE CODE IS SUPPLIED  ``AS IS'' WITHOUT WARRANTY OF ANY KIND,
+ * AND ITS AUTHOR AND THE JOURNAL OF ARTIFICIAL INTELLIGENCE RESEARCH
+ * (JAIR) AND JAIR'S PUBLISHERS AND DISTRIBUTORS, DISCLAIM ANY AND ALL
  * WARRANTIES, INCLUDING BUT NOT LIMITED TO ANY IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE, AND
  * ANY WARRANTIES OR NON INFRINGEMENT.  THE USER ASSUMES ALL LIABILITY AND
  * RESPONSIBILITY FOR USE OF THIS SOURCE CODE, AND NEITHER THE AUTHOR NOR
- * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR 
- * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the 
+ * JAIR, NOR JAIR'S PUBLISHERS AND DISTRIBUTORS, WILL BE LIABLE FOR
+ * DAMAGES OF ANY KIND RESULTING FROM ITS USE.  Without limiting the
  * generality of the foregoing, neither the author, nor JAIR, nor JAIR's
- * publishers and distributors, warrant that the Source Code will be 
- * error-free, will operate without interruption, or will meet the needs 
+ * publishers and distributors, warrant that the Source Code will be
+ * error-free, will operate without interruption, or will meet the needs
  * of the user.
  */
-
-
-
-
-
-
-
-
-
-
 
 /*********************************************************************
  * File: relax.c
@@ -62,15 +49,7 @@
  *
  * Author: Joerg Hoffmann 2001
  *
- *********************************************************************/ 
-
-
-
-
-
-
-
-
+ *********************************************************************/
 
 #include "ff.h"
 
@@ -82,21 +61,8 @@
 #include "relax.h"
 #include "search.h"
 
-
-
-
-
-
-
 /* local globals
  */
-
-
-
-
-
-
-
 
 /* fixpoint
  */
@@ -110,10 +76,6 @@ int lnum_ch_E;
 
 int *l0P_E;
 int lnum_0P_E;
-
-
-
-
 
 /* 1P extraction
  */
@@ -134,96 +96,37 @@ int lnum_used_O;
 int *lin_plan_E;
 int lnum_in_plan_E;
 
-
 /* helpful actions numerical helpers
  */
 Comparator *lHcomp;
 float *lHc;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 /*************************************
  * helper, for -1 == INFINITY method *
  *************************************/
 
-
-
-
-
-
-
-
-
-
-
-
-Bool LESS( int a, int b )
+Bool LESS(int a, int b)
 
 {
 
-  if ( a == INFINITY ) {
+  if (a == INFINITY)
+  {
     return FALSE;
   }
 
-  if ( b == INFINITY ) {
+  if (b == INFINITY)
+  {
     return TRUE;
   }
 
-  return ( a < b ? TRUE : FALSE );
-
+  return (a < b ? TRUE : FALSE);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /***********************************
  * FUNCTIONS ACCESSED FROM OUTSIDE *
  ***********************************/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int get_1P( State *S )
+int get_1P(State *S)
 
 {
 
@@ -232,27 +135,28 @@ int get_1P( State *S )
 
   gevaluated_states++;
 
-  solvable = build_fixpoint( S, &max );
+  solvable = build_fixpoint(S, &max);
 
-  if ( gcmd_line.display_info == 126 ) {
+  if (gcmd_line.display_info == 126)
+  {
     print_fixpoint_result();
   }
 
-  if ( solvable ) {
-    h = extract_1P( max );
-  } else {
+  if (solvable)
+  {
+    h = extract_1P(max);
+  }
+  else
+  {
     h = INFINITY;
   }
 
-  reset_fixpoint( max );
+  reset_fixpoint(max);
 
   return h;
-
 }
 
-
-
-int get_1P_and_H( State *S )
+int get_1P_and_H(State *S)
 
 {
 
@@ -261,28 +165,29 @@ int get_1P_and_H( State *S )
 
   gevaluated_states++;
 
-  solvable = build_fixpoint( S, &max );
+  solvable = build_fixpoint(S, &max);
 
-  if ( gcmd_line.display_info == 126 ) {
+  if (gcmd_line.display_info == 126)
+  {
     print_fixpoint_result();
   }
 
-  if ( solvable ) {
-    h = extract_1P( max );
+  if (solvable)
+  {
+    h = extract_1P(max);
     collect_H_info();
-  } else {
+  }
+  else
+  {
     h = INFINITY;
   }
 
-  reset_fixpoint( max );
+  reset_fixpoint(max);
 
   return h;
-
 }
 
-
-
-int get_1P_and_A( State *S )
+int get_1P_and_A(State *S)
 
 {
 
@@ -291,59 +196,61 @@ int get_1P_and_A( State *S )
 
   gevaluated_states++;
 
-  solvable = build_fixpoint( S, &max );
+  solvable = build_fixpoint(S, &max);
 
-  if ( gcmd_line.display_info == 126 ) {
+  if (gcmd_line.display_info == 126)
+  {
     print_fixpoint_result();
   }
 
-  if ( solvable ) {
-    h = extract_1P( max );
-  } else {
+  if (solvable)
+  {
+    h = extract_1P(max);
+  }
+  else
+  {
     h = INFINITY;
   }
 
   collect_A_info();
-  reset_fixpoint( max );
+  reset_fixpoint(max);
 
   return h;
-
 }
 
-
-
-void get_A( State *S )
+void get_A(State *S)
 
 {
 
   int i;
 
-  initialize_fixpoint( S );
-  
-  for ( i = 0; i < lnum_F; i++ ) {
-    activate_ft( lF[i], 0 );
+  initialize_fixpoint(S);
+
+  for (i = 0; i < lnum_F; i++)
+  {
+    activate_ft(lF[i], 0);
   }
-  for ( i = 0; i < lnum_0P_E; i++ ) {
-    if ( gef_conn[l0P_E[i]].in_E ) {
+  for (i = 0; i < lnum_0P_E; i++)
+  {
+    if (gef_conn[l0P_E[i]].in_E)
+    {
       continue;
     }
-    new_ef( l0P_E[i] );
+    new_ef(l0P_E[i]);
   }
-  for ( i = 0; i < gnum_fl_conn; i++ ) {
-    activate_fl( i, 0 );
+  for (i = 0; i < gnum_fl_conn; i++)
+  {
+    activate_fl(i, 0);
   }
 
   collect_A_info();
 
   /* 0 should be enough here...
    */
-  reset_fixpoint( 1 );
-
+  reset_fixpoint(1);
 }
 
-
-
-void collect_A_info( void )
+void collect_A_info(void)
 
 {
 
@@ -351,123 +258,72 @@ void collect_A_info( void )
 
   int i;
 
-  if ( first_call ) {
-    gA = ( int * ) calloc( gnum_op_conn, sizeof( int ) );
+  if (first_call)
+  {
+    gA = (int *)calloc(gnum_op_conn, sizeof(int));
     gnum_A = 0;
     first_call = FALSE;
   }
 
-  for ( i = 0; i < gnum_A; i++ ) {
+  for (i = 0; i < gnum_A; i++)
+  {
     gop_conn[gA[i]].is_in_A = FALSE;
   }
   gnum_A = 0;
 
-  for ( i = 0; i < lnum_E; i++ ) {
-    if ( gef_conn[lE[i]].level != 0 ) break;
-    if ( gop_conn[gef_conn[lE[i]].op].is_in_A ) {
+  for (i = 0; i < lnum_E; i++)
+  {
+    if (gef_conn[lE[i]].level != 0)
+      break;
+    if (gop_conn[gef_conn[lE[i]].op].is_in_A)
+    {
       continue;
     }
     gop_conn[gef_conn[lE[i]].op].is_in_A = TRUE;
     gA[gnum_A++] = gef_conn[lE[i]].op;
   }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /*******************************
  * RELAXED FIXPOINT ON A STATE *
  *******************************/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Bool build_fixpoint( State *S, int *max )
+Bool build_fixpoint(State *S, int *max)
 
 {
 
   int start_ft, stop_ft, start_ef, stop_ef, i, time = 0;
 
-  initialize_fixpoint( S );
+  initialize_fixpoint(S);
 
   start_ft = 0;
   start_ef = 0;
-  while ( TRUE ) {
-    if ( all_goals_activated( time ) ) {
+  while (TRUE)
+  {
+    if (all_goals_activated(time))
+    {
       break;
     }
-    if ( start_ft == lnum_F ) {
-      if ( fluents_hopeless( time ) ) {
-	/* fixpoint, goals not reached
-	 */
-	*max = time;
-	return FALSE;
+    if (start_ft == lnum_F)
+    {
+      if (fluents_hopeless(time))
+      {
+        /* fixpoint, goals not reached
+         */
+        *max = time;
+        return FALSE;
       }
     }
     /* make space if necessary, and copy over
      * info from time to time+1 for fluents
      */
-    extend_fluent_levels( time );
-    for ( i = 0; i < gnum_fl_conn; i++ ) {
-      if ( gfl_conn[i].def[time] ) {
-	gfl_conn[i].def[time+1] = TRUE;
-	gfl_conn[i].level[time+1] = gfl_conn[i].level[time];
+    extend_fluent_levels(time);
+    for (i = 0; i < gnum_fl_conn; i++)
+    {
+      if (gfl_conn[i].def[time])
+      {
+        gfl_conn[i].def[time + 1] = TRUE;
+        gfl_conn[i].level[time + 1] = gfl_conn[i].level[time];
       }
     }
 
@@ -477,39 +333,47 @@ Bool build_fixpoint( State *S, int *max )
      * - activate the fluents at their <time> level
      */
     stop_ft = lnum_F;
-    for ( i = start_ft; i < stop_ft; i++ ) {
-      activate_ft( lF[i], time );
+    for (i = start_ft; i < stop_ft; i++)
+    {
+      activate_ft(lF[i], time);
     }
-    if ( time == 0 ) {
-      for ( i = 0; i < lnum_0P_E; i++ ) {
-	if ( gef_conn[l0P_E[i]].in_E ) {
-	  continue;
-	}
-	new_ef( l0P_E[i] );
+    if (time == 0)
+    {
+      for (i = 0; i < lnum_0P_E; i++)
+      {
+        if (gef_conn[l0P_E[i]].in_E)
+        {
+          continue;
+        }
+        new_ef(l0P_E[i]);
       }
     }
-    for ( i = 0; i < gnum_fl_conn; i++ ) {
-      activate_fl( i, time );
+    for (i = 0; i < gnum_fl_conn; i++)
+    {
+      activate_fl(i, time);
     }
 
     /* now say what the benefits of applying the new
      * effect layer are:
-     * 
+     *
      * the facts,
      * plus the new fluent levels at time + 1.
      */
     stop_ef = lnum_E;
-    for ( i = start_ef; i < stop_ef; i++ ) {
-      activate_ef( lE[i], time );
+    for (i = start_ef; i < stop_ef; i++)
+    {
+      activate_ef(lE[i], time);
     }
-    /* on top of what the new effects have added to the fluents, all effects 
-     * strictly below <time> can be applied again. Their effect might be 
+    /* on top of what the new effects have added to the fluents, all effects
+     * strictly below <time> can be applied again. Their effect might be
      * different from what they've done before, as it might depend on
      * the rh fluent fl_
      */
-    if ( time > 0 ) {
-      for ( i = 0; i < start_ef; i++ ) {
-	apply_ef( lE[i], time );
+    if (time > 0)
+    {
+      for (i = 0; i < start_ef; i++)
+      {
+        apply_ef(lE[i], time);
       }
     }
     /* now check whether there became any assigner applicable that is
@@ -519,25 +383,29 @@ Bool build_fixpoint( State *S, int *max )
      * fluents as the others obviously don't get
      * assigned at all.
      */
-    for ( i = 0; i < gnum_real_fl_conn; i++ ) {
-      if ( !gfl_conn[i].curr_assigned ) {
-	/* no assigner in yet
-	 */
-	continue;
+    for (i = 0; i < gnum_real_fl_conn; i++)
+    {
+      if (!gfl_conn[i].curr_assigned)
+      {
+        /* no assigner in yet
+         */
+        continue;
       }
-      if ( !gfl_conn[i].def[time] ) {
-	gfl_conn[i].def[time+1] = TRUE;
-	gfl_conn[i].level[time+1] = gfl_conn[i].curr_max_assigned;
-	continue;
+      if (!gfl_conn[i].def[time])
+      {
+        gfl_conn[i].def[time + 1] = TRUE;
+        gfl_conn[i].level[time + 1] = gfl_conn[i].curr_max_assigned;
+        continue;
       }
-      if ( gfl_conn[i].curr_max_assigned > gfl_conn[i].level[time+1] ) {
-	gfl_conn[i].level[time+1] = gfl_conn[i].curr_max_assigned;
+      if (gfl_conn[i].curr_max_assigned > gfl_conn[i].level[time + 1])
+      {
+        gfl_conn[i].level[time + 1] = gfl_conn[i].curr_max_assigned;
       }
     }
     /* finally, determine the new levels of the artificial fluents
      * at the new time step.
      */
-    determine_artificial_fl_levels( time + 1 );
+    determine_artificial_fl_levels(time + 1);
 
     start_ft = stop_ft;
     start_ef = stop_ef;
@@ -546,12 +414,9 @@ Bool build_fixpoint( State *S, int *max )
 
   *max = time;
   return TRUE;
-
 }
 
-
-
-Bool fluents_hopeless( int time )
+Bool fluents_hopeless(int time)
 
 {
 
@@ -565,47 +430,58 @@ Bool fluents_hopeless( int time )
    * for the formal details of this, ie. the mneed values, see the JAIR article.
    */
 
-  if ( time == 0 ) {
+  if (time == 0)
+  {
     /* nothing has happened yet...
      */
     return FALSE;
   }
 
-  for ( i = 0; i < gnum_real_fl_conn; i++ ) {
-    gmneed_start_D[i] = gfl_conn[i].def[time-1];
-    gmneed_start_V[i] = gfl_conn[i].level[time-1];
+  for (i = 0; i < gnum_real_fl_conn; i++)
+  {
+    gmneed_start_D[i] = gfl_conn[i].def[time - 1];
+    gmneed_start_V[i] = gfl_conn[i].level[time - 1];
   }
 
-  for ( i = 0; i < gnum_real_fl_conn; i++ ) {
-    if ( !gfl_conn[i].def[time-1] &&
-	 !gfl_conn[i].def[time] ) {
+  for (i = 0; i < gnum_real_fl_conn; i++)
+  {
+    if (!gfl_conn[i].def[time - 1] &&
+        !gfl_conn[i].def[time])
+    {
       /* this one has obviously not been made any better
        */
       continue;
     }
-    if ( gfl_conn[i].def[time-1] &&
-	 gfl_conn[i].level[time] == gfl_conn[i].level[time-1] ) {
+    if (gfl_conn[i].def[time - 1] &&
+        gfl_conn[i].level[time] == gfl_conn[i].level[time - 1])
+    {
       /* this one has not improved either
        */
       continue;
     }
-    get_mneed( i, &minusinfty, &mneed );
-    if ( gcmd_line.display_info == 333 ) {
+    get_mneed(i, &minusinfty, &mneed);
+    if (gcmd_line.display_info == 333)
+    {
       printf("\nstart values:");
-      for ( j = 0; j < gnum_real_fl_conn; j++ ) {
-	printf("\n"); print_fl_name( j ); 
-	printf(" --- %d, %f", gmneed_start_D[j], gmneed_start_V[j]);
+      for (j = 0; j < gnum_real_fl_conn; j++)
+      {
+        printf("\n");
+        print_fl_name(j);
+        printf(" --- %d, %f", gmneed_start_D[j], gmneed_start_V[j]);
       }
-      printf("\nmneed "); print_fl_name( i ); 
+      printf("\nmneed ");
+      print_fl_name(i);
       printf(" --- %d, %f", minusinfty, mneed);
     }
 
-    if ( minusinfty ) {
+    if (minusinfty)
+    {
       /* this one is not needed at all
        */
       continue;
     }
-    if ( gfl_conn[i].def[time-1] && gfl_conn[i].level[time-1] > mneed ) {
+    if (gfl_conn[i].def[time - 1] && gfl_conn[i].level[time - 1] > mneed)
+    {
       /* here we already had a sufficient value at the last layer.
        */
       continue;
@@ -614,12 +490,9 @@ Bool fluents_hopeless( int time )
   }
 
   return TRUE;
-    
 }
 
-
-
-void initialize_fixpoint( State *S )
+void initialize_fixpoint(State *S)
 
 {
 
@@ -627,46 +500,52 @@ void initialize_fixpoint( State *S )
 
   int i;
 
-  if ( first_call ) {
+  if (first_call)
+  {
     /* make initial space for fluent levels
      */
-    extend_fluent_levels( -1 );
+    extend_fluent_levels(-1);
 
     /* get memory for local globals
      */
-    lF = ( int * ) calloc( gnum_ft_conn, sizeof( int ) );
-    lE = ( int * ) calloc( gnum_ef_conn, sizeof( int ) );
-    lch_E = ( int * ) calloc( gnum_ef_conn, sizeof( int ) );
-    l0P_E = ( int * ) calloc( gnum_ef_conn, sizeof( int ) );
-    
+    lF = (int *)calloc(gnum_ft_conn, sizeof(int));
+    lE = (int *)calloc(gnum_ef_conn, sizeof(int));
+    lch_E = (int *)calloc(gnum_ef_conn, sizeof(int));
+    l0P_E = (int *)calloc(gnum_ef_conn, sizeof(int));
+
     /* initialize connectivity graph members for
      * relaxed planning
      */
     lnum_0P_E = 0;
-    for ( i = 0; i < gnum_ef_conn; i++ ) {      
-      gef_conn[i].level = INFINITY;    
+    for (i = 0; i < gnum_ef_conn; i++)
+    {
+      gef_conn[i].level = INFINITY;
       gef_conn[i].in_E = FALSE;
       gef_conn[i].num_active_PCs = 0;
       gef_conn[i].ch = FALSE;
 
       gef_conn[i].num_active_f_PCs = 0;
-      
-      if ( gef_conn[i].num_PC == 0 &&
-	   gef_conn[i].num_f_PC == 0 &&
-	   !gef_conn[i].illegal &&
-	   !gef_conn[i].removed ) {
-	l0P_E[lnum_0P_E++] = i;
+
+      if (gef_conn[i].num_PC == 0 &&
+          gef_conn[i].num_f_PC == 0 &&
+          !gef_conn[i].illegal &&
+          !gef_conn[i].removed)
+      {
+        l0P_E[lnum_0P_E++] = i;
       }
     }
-    for ( i = 0; i < gnum_op_conn; i++ ) {      
+    for (i = 0; i < gnum_op_conn; i++)
+    {
       gop_conn[i].is_in_A = FALSE;
       gop_conn[i].is_in_H = FALSE;
     }
-    for ( i = 0; i < gnum_ft_conn; i++ ) {
+    for (i = 0; i < gnum_ft_conn; i++)
+    {
       gft_conn[i].level = INFINITY;
       gft_conn[i].in_F = FALSE;
     }
-    for ( i = 0; i < gnum_fl_conn; i++ ) {
+    for (i = 0; i < gnum_fl_conn; i++)
+    {
       gfl_conn[i].curr_assigned = FALSE;
     }
     first_call = FALSE;
@@ -676,16 +555,20 @@ void initialize_fixpoint( State *S )
   lnum_ch_E = 0;
 
   lnum_F = 0;
-  for ( i = 0; i < S->num_F; i++ ) {
-    if ( gft_conn[S->F[i]].in_F ) {
+  for (i = 0; i < S->num_F; i++)
+  {
+    if (gft_conn[S->F[i]].in_F)
+    {
       continue;
     }
-    new_fact( S->F[i] );
+    new_fact(S->F[i]);
   }
   /* only the real fls are ever in there
    */
-  for ( i = 0; i < gnum_real_fl_conn; i++ ) {
-    if ( !S->f_D[i] ) {
+  for (i = 0; i < gnum_real_fl_conn; i++)
+  {
+    if (!S->f_D[i])
+    {
       continue;
     }
     gfl_conn[i].def[0] = TRUE;
@@ -693,13 +576,10 @@ void initialize_fixpoint( State *S )
   }
   /* now set the art. values from that.
    */
-  determine_artificial_fl_levels( 0 );
-
+  determine_artificial_fl_levels(0);
 }
 
-
-
-void determine_artificial_fl_levels( int time )
+void determine_artificial_fl_levels(int time)
 
 {
 
@@ -708,27 +588,30 @@ void determine_artificial_fl_levels( int time )
 
   /* for all art. fls
    */
-  for ( i = gnum_real_fl_conn; i < gnum_fl_conn; i++ ) {
+  for (i = gnum_real_fl_conn; i < gnum_fl_conn; i++)
+  {
     l = 0;
-    for ( j = 0; j < gfl_conn[i].num_lnf; j++ ) {
-      if ( !gfl_conn[gfl_conn[i].lnf_F[j]].def[time] ) break;
+    for (j = 0; j < gfl_conn[i].num_lnf; j++)
+    {
+      if (!gfl_conn[gfl_conn[i].lnf_F[j]].def[time])
+        break;
       l += (gfl_conn[i].lnf_C[j] * gfl_conn[gfl_conn[i].lnf_F[j]].level[time]);
     }
-    if ( j < gfl_conn[i].num_lnf ) {
+    if (j < gfl_conn[i].num_lnf)
+    {
       /* one part yet undefined.
        */
       continue;
-    } else {
+    }
+    else
+    {
       gfl_conn[i].def[time] = TRUE;
       gfl_conn[i].level[time] = l;
     }
   }
-
 }
 
-
-
-void extend_fluent_levels( int time )
+void extend_fluent_levels(int time)
 
 {
 
@@ -739,52 +622,57 @@ void extend_fluent_levels( int time )
 
   int i, j;
 
-  if ( time == -1 ) {
+  if (time == -1)
+  {
     highest_seen = RELAXED_STEPS_DEFAULT;
-    for ( i = 0; i < gnum_fl_conn; i++ ) {
-      gfl_conn[i].def = ( Bool * ) calloc( highest_seen, sizeof( Bool ) );
-      for ( j = 0; j < highest_seen; j++ ) {
-	gfl_conn[i].def[j] = FALSE;
+    for (i = 0; i < gnum_fl_conn; i++)
+    {
+      gfl_conn[i].def = (Bool *)calloc(highest_seen, sizeof(Bool));
+      for (j = 0; j < highest_seen; j++)
+      {
+        gfl_conn[i].def[j] = FALSE;
       }
-      gfl_conn[i].level = ( float * ) calloc( highest_seen, sizeof( float ) );
+      gfl_conn[i].level = (float *)calloc(highest_seen, sizeof(float));
     }
     return;
   }
 
-  if ( time + 1 < highest_seen ) return;
+  if (time + 1 < highest_seen)
+    return;
 
-  b = ( Bool * ) calloc( time + 1, sizeof( Bool ) );
-  f1 = ( float * ) calloc( time + 1, sizeof( float ) );
+  b = (Bool *)calloc(time + 1, sizeof(Bool));
+  f1 = (float *)calloc(time + 1, sizeof(float));
 
   highest_seen = time + 10;
-  for ( i = 0; i < gnum_fl_conn; i++ ) {
-    for ( j = 0; j <= time; j++ ) {
+  for (i = 0; i < gnum_fl_conn; i++)
+  {
+    for (j = 0; j <= time; j++)
+    {
       b[j] = gfl_conn[i].def[j];
       f1[j] = gfl_conn[i].level[j];
     }
 
-    free( gfl_conn[i].def );
-    free( gfl_conn[i].level );
-    gfl_conn[i].def = ( Bool * ) calloc( highest_seen, sizeof( Bool ) );
-    gfl_conn[i].level = ( float * ) calloc( highest_seen, sizeof( float ) );
+    free(gfl_conn[i].def);
+    free(gfl_conn[i].level);
+    gfl_conn[i].def = (Bool *)calloc(highest_seen, sizeof(Bool));
+    gfl_conn[i].level = (float *)calloc(highest_seen, sizeof(float));
 
-    for ( j = 0; j <= time; j++ ) {
+    for (j = 0; j <= time; j++)
+    {
       gfl_conn[i].def[j] = b[j];
       gfl_conn[i].level[j] = f1[j];
     }
-    for ( j = time + 1; j < highest_seen; j++ ) {
+    for (j = time + 1; j < highest_seen; j++)
+    {
       gfl_conn[i].def[j] = FALSE;
     }
   }
 
-  free( b );
-  free( f1 );
-
+  free(b);
+  free(f1);
 }
 
-
-
-void activate_ft( int index, int time )
+void activate_ft(int index, int time)
 
 {
 
@@ -792,104 +680,116 @@ void activate_ft( int index, int time )
 
   gft_conn[index].level = time;
 
-  for ( i = 0; i < gft_conn[index].num_PC; i++ ) {
+  for (i = 0; i < gft_conn[index].num_PC; i++)
+  {
     /* never activate illegal effects.
      */
-    if ( gef_conn[gft_conn[index].PC[i]].illegal ) continue;
+    if (gef_conn[gft_conn[index].PC[i]].illegal)
+      continue;
 
     gef_conn[gft_conn[index].PC[i]].num_active_PCs++;
-    if ( !gef_conn[gft_conn[index].PC[i]].ch ) {
+    if (!gef_conn[gft_conn[index].PC[i]].ch)
+    {
       gef_conn[gft_conn[index].PC[i]].ch = TRUE;
       lch_E[lnum_ch_E++] = gft_conn[index].PC[i];
     }
-    if ( gef_conn[gft_conn[index].PC[i]].num_active_PCs ==
-	 gef_conn[gft_conn[index].PC[i]].num_PC &&
-	 gef_conn[gft_conn[index].PC[i]].num_active_f_PCs ==
-	 gef_conn[gft_conn[index].PC[i]].num_f_PC ) {
-      new_ef( gft_conn[index].PC[i] );
+    if (gef_conn[gft_conn[index].PC[i]].num_active_PCs ==
+            gef_conn[gft_conn[index].PC[i]].num_PC &&
+        gef_conn[gft_conn[index].PC[i]].num_active_f_PCs ==
+            gef_conn[gft_conn[index].PC[i]].num_f_PC)
+    {
+      new_ef(gft_conn[index].PC[i]);
     }
   }
-
 }
 
-
-
-void activate_fl( int index, int time )
+void activate_fl(int index, int time)
 
 {
 
   int i, ef;
 
-  if ( !gfl_conn[index].def[time] ) return;
+  if (!gfl_conn[index].def[time])
+    return;
 
-  for ( i = 0; i < gfl_conn[index].num_PC; i++ ) {
+  for (i = 0; i < gfl_conn[index].num_PC; i++)
+  {
     ef = gfl_conn[index].PC[i];
-    if ( gef_conn[ef].illegal ) continue;
+    if (gef_conn[ef].illegal)
+      continue;
 
-    if ( gef_conn[ef].f_PC_direct_comp[index] == IGUAL ) {
+    if (gef_conn[ef].f_PC_direct_comp[index] == IGUAL)
+    {
       printf("\n\nprec of addressed ef does not care about fl!\n\n");
-      exit( 1 );
+      exit(1);
     }
-    if ( !number_comparison_holds( gef_conn[ef].f_PC_direct_comp[index],
-				   gfl_conn[index].level[time],
-				   gef_conn[ef].f_PC_direct_c[index] ) ) {
+    if (!number_comparison_holds(gef_conn[ef].f_PC_direct_comp[index],
+                                 gfl_conn[index].level[time],
+                                 gef_conn[ef].f_PC_direct_c[index]))
+    {
       /* the level is not yet high enough for this one
        */
       continue;
     }
-    if ( time > 0 &&
-	 gfl_conn[index].def[time-1] &&
-	 number_comparison_holds( gef_conn[ef].f_PC_direct_comp[index],
-				  gfl_conn[index].level[time-1],
-				  gef_conn[ef].f_PC_direct_c[index] ) ) {
+    if (time > 0 &&
+        gfl_conn[index].def[time - 1] &&
+        number_comparison_holds(gef_conn[ef].f_PC_direct_comp[index],
+                                gfl_conn[index].level[time - 1],
+                                gef_conn[ef].f_PC_direct_c[index]))
+    {
       /* last time this was already in: that one's old!
        * do not count it!
        */
       continue;
     }
     gef_conn[ef].num_active_f_PCs++;
-    if ( !gef_conn[ef].ch ) {
+    if (!gef_conn[ef].ch)
+    {
       gef_conn[ef].ch = TRUE;
       lch_E[lnum_ch_E++] = ef;
     }
-    if ( gef_conn[ef].num_active_PCs == gef_conn[ef].num_PC &&
-	 gef_conn[ef].num_active_f_PCs == gef_conn[ef].num_f_PC ) {
-      new_ef( ef );
+    if (gef_conn[ef].num_active_PCs == gef_conn[ef].num_PC &&
+        gef_conn[ef].num_active_f_PCs == gef_conn[ef].num_f_PC)
+    {
+      new_ef(ef);
     }
   }
-
 }
 
-
-
-void activate_ef( int index, int time )
+void activate_ef(int index, int time)
 
 {
 
   int i, fl;
   float val;
 
-  if ( gef_conn[index].removed ) {
+  if (gef_conn[index].removed)
+  {
     printf("\n\nactivating removed effect!!\n\n");
-    exit( 1 );
+    exit(1);
   }
-  if ( gef_conn[index].illegal ) {
+  if (gef_conn[index].illegal)
+  {
     printf("\n\nactivating illegal effect!!\n\n");
-    exit( 1 );
+    exit(1);
   }
 
   gef_conn[index].level = time;
 
-  for ( i = 0; i < gef_conn[index].num_A; i++ ) {
-    if ( gft_conn[gef_conn[index].A[i]].in_F ) {
+  for (i = 0; i < gef_conn[index].num_A; i++)
+  {
+    if (gft_conn[gef_conn[index].A[i]].in_F)
+    {
       continue;
     }
-    new_fact( gef_conn[index].A[i] );
+    new_fact(gef_conn[index].A[i]);
   }
 
-  for ( i = 0; i < gef_conn[index].num_IN; i++ ) {
+  for (i = 0; i < gef_conn[index].num_IN; i++)
+  {
     fl = gef_conn[index].IN_fl[i];
-    if ( !gfl_conn[fl].def[time] ) {
+    if (!gfl_conn[fl].def[time])
+    {
       /* in principle, we could skip this action here as
        * it affects a fluent that is yet undefined.
        *
@@ -903,209 +803,235 @@ void activate_ef( int index, int time )
     /* value is either the constant, or the (artificial lnf?) fl_ level
      * at <time> plus the constant.
      */
-    if ( gef_conn[index].IN_fl_[i] == -1 ) {
+    if (gef_conn[index].IN_fl_[i] == -1)
+    {
       val = gef_conn[index].IN_c[i];
-    } else {
-      if ( !gfl_conn[gef_conn[index].IN_fl_[i]].def[time] ) {
-	/* this one does not help us here.
-	 */
-	continue;
+    }
+    else
+    {
+      if (!gfl_conn[gef_conn[index].IN_fl_[i]].def[time])
+      {
+        /* this one does not help us here.
+         */
+        continue;
       }
       val = gfl_conn[gef_conn[index].IN_fl_[i]].level[time] + gef_conn[index].IN_c[i];
     }
     /* we only consider the effect if it helps us.
      */
-    if ( val > 0 ) {
-      gfl_conn[fl].level[time+1] += val;
+    if (val > 0)
+    {
+      gfl_conn[fl].level[time + 1] += val;
     }
   }
 
   /* the assigners are remembered in a parallel sort of way...
    */
-  for ( i = 0; i < gef_conn[index].num_AS; i++ ) {
+  for (i = 0; i < gef_conn[index].num_AS; i++)
+  {
     fl = gef_conn[index].AS_fl[i];
-    if ( gef_conn[index].AS_fl_[i] == -1 ) {
+    if (gef_conn[index].AS_fl_[i] == -1)
+    {
       val = gef_conn[index].AS_c[i];
-    } else {
-      if ( !gfl_conn[gef_conn[index].AS_fl_[i]].def[time] ) {
-	/* this one does not help us here.
-	 */
-	continue;
+    }
+    else
+    {
+      if (!gfl_conn[gef_conn[index].AS_fl_[i]].def[time])
+      {
+        /* this one does not help us here.
+         */
+        continue;
       }
       val = gfl_conn[gef_conn[index].AS_fl_[i]].level[time] + gef_conn[index].AS_c[i];
     }
-    if ( gfl_conn[fl].curr_assigned ) {
-      if ( gfl_conn[fl].curr_max_assigned < val ) {
-	gfl_conn[fl].curr_max_assigned = val;
+    if (gfl_conn[fl].curr_assigned)
+    {
+      if (gfl_conn[fl].curr_max_assigned < val)
+      {
+        gfl_conn[fl].curr_max_assigned = val;
       }
-    } else {
+    }
+    else
+    {
       gfl_conn[fl].curr_assigned = TRUE;
       gfl_conn[fl].curr_max_assigned = val;
     }
   }
-
 }
-
-
 
 /* this one is used to apply effects already there
  * at later time steps - necessary because their
  * numeric effects might have changed.
  */
-void apply_ef( int index, int time )
+void apply_ef(int index, int time)
 
 {
 
   int i, fl;
   float val;
 
-  if ( gef_conn[index].removed ) {
+  if (gef_conn[index].removed)
+  {
     printf("\n\napplying removed effect!!\n\n");
-    exit( 1 );
+    exit(1);
   }
-  if ( gef_conn[index].illegal ) {
+  if (gef_conn[index].illegal)
+  {
     return;
   }
 
   /* only numerical effects matter.
    */
-  for ( i = 0; i < gef_conn[index].num_IN; i++ ) {
+  for (i = 0; i < gef_conn[index].num_IN; i++)
+  {
     fl = gef_conn[index].IN_fl[i];
-    if ( !gfl_conn[fl].def[time] ) {
+    if (!gfl_conn[fl].def[time])
+    {
       continue;
     }
-    if ( gef_conn[index].IN_fl_[i] == -1 ) {
+    if (gef_conn[index].IN_fl_[i] == -1)
+    {
       val = gef_conn[index].IN_c[i];
-    } else {
-      if ( !gfl_conn[gef_conn[index].IN_fl_[i]].def[time] ) {
-	/* no effect here.
-	 */
-	continue;
+    }
+    else
+    {
+      if (!gfl_conn[gef_conn[index].IN_fl_[i]].def[time])
+      {
+        /* no effect here.
+         */
+        continue;
       }
       val = gfl_conn[gef_conn[index].IN_fl_[i]].level[time] + gef_conn[index].IN_c[i];
     }
-    if ( val > 0 ) {
-      gfl_conn[fl].level[time+1] += val;
+    if (val > 0)
+    {
+      gfl_conn[fl].level[time + 1] += val;
     }
   }
 
-  for ( i = 0; i < gef_conn[index].num_AS; i++ ) {
+  for (i = 0; i < gef_conn[index].num_AS; i++)
+  {
     fl = gef_conn[index].AS_fl[i];
-    if ( gef_conn[index].AS_fl_[i] == -1 ) {
+    if (gef_conn[index].AS_fl_[i] == -1)
+    {
       val = gef_conn[index].AS_c[i];
-    } else {
-      if ( !gfl_conn[gef_conn[index].AS_fl_[i]].def[time] ) {
-	/* no effect here.
-	 */
-	continue;
+    }
+    else
+    {
+      if (!gfl_conn[gef_conn[index].AS_fl_[i]].def[time])
+      {
+        /* no effect here.
+         */
+        continue;
       }
       val = gfl_conn[gef_conn[index].AS_fl_[i]].level[time] + gef_conn[index].AS_c[i];
     }
-    if ( gfl_conn[fl].curr_assigned ) {
-      if ( gfl_conn[fl].curr_max_assigned < val ) {
-	gfl_conn[fl].curr_max_assigned = val;
+    if (gfl_conn[fl].curr_assigned)
+    {
+      if (gfl_conn[fl].curr_max_assigned < val)
+      {
+        gfl_conn[fl].curr_max_assigned = val;
       }
-    } else {
+    }
+    else
+    {
       gfl_conn[fl].curr_assigned = TRUE;
       gfl_conn[fl].curr_max_assigned = val;
     }
   }
-
 }
 
-
-
-void new_fact( int index )
+void new_fact(int index)
 
 {
 
   lF[lnum_F++] = index;
   gft_conn[index].in_F = TRUE;
-
 }
 
-
-
-void new_ef( int index )
+void new_ef(int index)
 
 {
 
   lE[lnum_E++] = index;
   gef_conn[index].in_E = TRUE;
-
 }
 
-
-
-void reset_fixpoint( int max )
+void reset_fixpoint(int max)
 
 {
 
   int i, j;
 
-  for ( i = 0; i < lnum_F; i++ ) {
+  for (i = 0; i < lnum_F; i++)
+  {
     gft_conn[lF[i]].level = INFINITY;
     gft_conn[lF[i]].in_F = FALSE;
   }
 
-  for ( i = 0; i < lnum_E; i++ ) {
+  for (i = 0; i < lnum_E; i++)
+  {
     gef_conn[lE[i]].level = INFINITY;
     gef_conn[lE[i]].in_E = FALSE;
   }
 
-  for ( i = 0; i < lnum_ch_E; i++ ) {
+  for (i = 0; i < lnum_ch_E; i++)
+  {
     gef_conn[lch_E[i]].num_active_PCs = 0;
     gef_conn[lch_E[i]].num_active_f_PCs = 0;
     gef_conn[lch_E[i]].ch = FALSE;
   }
 
-  for ( i = 0; i < gnum_fl_conn; i++ ) {
-    for ( j = 0; j <= max; j++ ) {
+  for (i = 0; i < gnum_fl_conn; i++)
+  {
+    for (j = 0; j <= max; j++)
+    {
       gfl_conn[i].def[j] = FALSE;
     }
     gfl_conn[i].curr_assigned = FALSE;
   }
-
 }
 
-
-
-Bool all_goals_activated( int time ) 
+Bool all_goals_activated(int time)
 
 {
 
   int i;
 
-  for ( i = 0; i < gnum_flogic_goal; i++ ) {
-    if ( !gft_conn[gflogic_goal[i]].in_F ) {
+  for (i = 0; i < gnum_flogic_goal; i++)
+  {
+    if (!gft_conn[gflogic_goal[i]].in_F)
+    {
       return FALSE;
     }
   }
 
-  for ( i = 0; i < gnum_fnumeric_goal; i++ ) {
-    if ( !gfl_conn[gfnumeric_goal_fl[i]].def[time] ) {
+  for (i = 0; i < gnum_fnumeric_goal; i++)
+  {
+    if (!gfl_conn[gfnumeric_goal_fl[i]].def[time])
+    {
       return FALSE;
     }
-    if ( !number_comparison_holds( gfnumeric_goal_comp[i],
-				   gfl_conn[gfnumeric_goal_fl[i]].level[time],
-				   gfnumeric_goal_c[i] ) ) {
+    if (!number_comparison_holds(gfnumeric_goal_comp[i],
+                                 gfl_conn[gfnumeric_goal_fl[i]].level[time],
+                                 gfnumeric_goal_c[i]))
+    {
       return FALSE;
     }
   }
 
-  for ( i = 0; i < gnum_flogic_goal; i++ ) {
-    if ( gft_conn[gflogic_goal[i]].level == INFINITY ) {
+  for (i = 0; i < gnum_flogic_goal; i++)
+  {
+    if (gft_conn[gflogic_goal[i]].level == INFINITY)
+    {
       gft_conn[gflogic_goal[i]].level = time;
     }
   }
 
   return TRUE;
-
 }
 
-
-
-void print_fixpoint_result( void )
+void print_fixpoint_result(void)
 
 {
 
@@ -1113,89 +1039,105 @@ void print_fixpoint_result( void )
   Bool hit, hit_F, hit_E, hit_FL;
 
   time = 0;
-  while ( 1 ) {
+  while (1)
+  {
     hit = FALSE;
     hit_F = FALSE;
     hit_E = FALSE;
     hit_FL = FALSE;
-    for ( i = 0; i < gnum_ft_conn; i++ ) {
-      if ( gft_conn[i].level == time ) {
-	hit = TRUE;
-	hit_F = TRUE;
-	break;
+    for (i = 0; i < gnum_ft_conn; i++)
+    {
+      if (gft_conn[i].level == time)
+      {
+        hit = TRUE;
+        hit_F = TRUE;
+        break;
       }
     }
-    for ( i = 0; i < gnum_ef_conn; i++ ) {
-      if ( gef_conn[i].level == time ) {
-	hit = TRUE;
-	hit_E = TRUE;
-	break;
+    for (i = 0; i < gnum_ef_conn; i++)
+    {
+      if (gef_conn[i].level == time)
+      {
+        hit = TRUE;
+        hit_E = TRUE;
+        break;
       }
     }
-    for ( i = 0; i < gnum_fl_conn; i++ ) {
-      if ( gfl_conn[i].def[time] ) {
-	hit = TRUE;
-	hit_FL = TRUE;
-	break;
+    for (i = 0; i < gnum_fl_conn; i++)
+    {
+      if (gfl_conn[i].def[time])
+      {
+        hit = TRUE;
+        hit_FL = TRUE;
+        break;
       }
     }
-    if ( !hit ) {
+    if (!hit)
+    {
       break;
     }
- 
+
     printf("\n\nLEVEL %d:", time);
-    if ( hit_F ) {
+    if (hit_F)
+    {
       printf("\n\nFACTS:");
-      for ( i = 0; i < gnum_ft_conn; i++ ) {
-	if ( gft_conn[i].level == time ) {
-	  printf("\n");
-	  print_ft_name( i );
-	}
+      for (i = 0; i < gnum_ft_conn; i++)
+      {
+        if (gft_conn[i].level == time)
+        {
+          printf("\n");
+          print_ft_name(i);
+        }
       }
     }
-    if ( hit_FL ) {
+    if (hit_FL)
+    {
       printf("\n\nFLUENTS:");
-      for ( i = 0; i < gnum_fl_conn; i++ ) {
-	if ( gfl_conn[i].def[time] ) {
-	  printf("\n");
-	  print_fl_name( i );
-	  printf(": %f", gfl_conn[i].level[time]);
-	} else {
-	  printf("\n");
-	  print_fl_name( i );
-	  printf(": UNDEF");
-	}
+      for (i = 0; i < gnum_fl_conn; i++)
+      {
+        if (gfl_conn[i].def[time])
+        {
+          printf("\n");
+          print_fl_name(i);
+          printf(": %f", gfl_conn[i].level[time]);
+        }
+        else
+        {
+          printf("\n");
+          print_fl_name(i);
+          printf(": UNDEF");
+        }
       }
     }
-    if ( hit_E ) {
+    if (hit_E)
+    {
       printf("\n\nEFS:");
-      for ( i = 0; i < gnum_ef_conn; i++ ) {
-	if ( gef_conn[i].level == time ) {
-	  printf("\neffect %d to ", i);
-	  print_op_name( gef_conn[i].op );
-	}
+      for (i = 0; i < gnum_ef_conn; i++)
+      {
+        if (gef_conn[i].level == time)
+        {
+          printf("\neffect %d to ", i);
+          print_op_name(gef_conn[i].op);
+        }
       }
     }
 
     time++;
   }
-  fflush( stdout );
-
+  fflush(stdout);
 }
- 
-
 
 /* naive implementation of the mneed computation. speedups
  * should be possible by utilizing effective data access, and
  * dynamic programming according to topological sorting wrp to
  * := dependencies.
- * 
+ *
  * wonder whether that process is time relevant at all?
  *
  * function is recursive, and will terminate because the :=
  * dependencies are cycle-free.
  */
-void get_mneed( int fl, Bool *minusinfty, float *val )
+void get_mneed(int fl, Bool *minusinfty, float *val)
 
 {
 
@@ -1208,162 +1150,200 @@ void get_mneed( int fl, Bool *minusinfty, float *val )
   c = 0;
   /* check through the actions, i.e. effects. I suppose this could be made
    * *a lot* faster by checking through the PC information of the fl;
-   * additionally, we'd need fast access to the art. fluents that fl 
+   * additionally, we'd need fast access to the art. fluents that fl
    * participates in.
    */
-  for ( ef = 0; ef < gnum_ef_conn; ef++ ) {
+  for (ef = 0; ef < gnum_ef_conn; ef++)
+  {
     /* the preconds must be supported above their required value.
      */
-    for ( pc = 0;  pc < gef_conn[ef].num_f_PC; pc++ ) {
+    for (pc = 0; pc < gef_conn[ef].num_f_PC; pc++)
+    {
       /* constraint here is gef_conn[ef].f_PC_fl[pc] >= [>] gef_conn[ef].f_PC_c[pc]
        * where lh side can be lnf expression.
        */
       fl_ = gef_conn[ef].f_PC_fl[pc];
-      if ( fl_ < 0 ) continue;
-      if ( fl_ == fl ) {
-	c++;
-	val_ = gef_conn[ef].f_PC_c[pc];
-	if ( c == 1 || val_ > *val ) {
-	  *val = val_;
-	}
-	continue;
+      if (fl_ < 0)
+        continue;
+      if (fl_ == fl)
+      {
+        c++;
+        val_ = gef_conn[ef].f_PC_c[pc];
+        if (c == 1 || val_ > *val)
+        {
+          *val = val_;
+        }
+        continue;
       }
-      if ( !gfl_conn[fl_].artificial ) continue;
-      for ( i = 0; i < gfl_conn[fl_].num_lnf; i++ ) {
-	if ( gfl_conn[fl_].lnf_F[i] == fl ) {
-	  /* might be that the expression can't be supported --
-	   * if one of the fluents is undefined.
-	   */
-	  if ( supv( &val_, fl, fl_, gef_conn[ef].f_PC_c[pc] ) ) {
-	    c++;
-	    if ( c == 1 || val_ > *val ) {
-	      *val = val_;
-	    }
-	  }
-	  break;
-	}
+      if (!gfl_conn[fl_].artificial)
+        continue;
+      for (i = 0; i < gfl_conn[fl_].num_lnf; i++)
+      {
+        if (gfl_conn[fl_].lnf_F[i] == fl)
+        {
+          /* might be that the expression can't be supported --
+           * if one of the fluents is undefined.
+           */
+          if (supv(&val_, fl, fl_, gef_conn[ef].f_PC_c[pc]))
+          {
+            c++;
+            if (c == 1 || val_ > *val)
+            {
+              *val = val_;
+            }
+          }
+          break;
+        }
       }
     }
 
     /* the += effs must be supported above 0.
      */
-    for ( in = 0; in < gef_conn[ef].num_IN; in++ ) {
-      /* += eff here is gef_conn[ef].IN_fl[in] += gef_conn[ef].IN_fl_[in] + 
+    for (in = 0; in < gef_conn[ef].num_IN; in++)
+    {
+      /* += eff here is gef_conn[ef].IN_fl[in] += gef_conn[ef].IN_fl_[in] +
        *                                          gef_conn[ef].IN_c[in]
        * where gef_conn[ef].IN_fl_[in] can be lnf expression.
        */
       /* relevance...
        */
-      if ( !gfl_conn[gef_conn[ef].IN_fl[in]].relevant ) {
-	continue;
+      if (!gfl_conn[gef_conn[ef].IN_fl[in]].relevant)
+      {
+        continue;
       }
       fl_ = gef_conn[ef].IN_fl_[in];
-      if ( fl_ < 0 ) continue;
-      if ( fl_ == fl ) {
-	c++;
-	val_ = (-1) * gef_conn[ef].IN_c[in];
-	if ( c == 1 || val_ > *val ) {
-	  *val = val_;
-	}
-	continue;
+      if (fl_ < 0)
+        continue;
+      if (fl_ == fl)
+      {
+        c++;
+        val_ = (-1) * gef_conn[ef].IN_c[in];
+        if (c == 1 || val_ > *val)
+        {
+          *val = val_;
+        }
+        continue;
       }
-      if ( !gfl_conn[fl_].artificial ) continue;
-      for ( i = 0; i < gfl_conn[fl_].num_lnf; i++ ) {
-	if ( gfl_conn[fl_].lnf_F[i] == fl ) {
-	  if ( supv( &val_, fl, fl_, (-1) * gef_conn[ef].IN_c[in] ) ) {
-	    c++;
-	    if ( c == 1 || val_ > *val ) {
-	      *val = val_;
-	    }
-	  }
-	  break;
-	}
+      if (!gfl_conn[fl_].artificial)
+        continue;
+      for (i = 0; i < gfl_conn[fl_].num_lnf; i++)
+      {
+        if (gfl_conn[fl_].lnf_F[i] == fl)
+        {
+          if (supv(&val_, fl, fl_, (-1) * gef_conn[ef].IN_c[in]))
+          {
+            c++;
+            if (c == 1 || val_ > *val)
+            {
+              *val = val_;
+            }
+          }
+          break;
+        }
       }
     }
 
     /* the := effs must be supported above the mneed value of the affected
      * varuable..
      */
-    for ( as = 0; as < gef_conn[ef].num_AS; as++ ) {
-      /* := eff here is gef_conn[ef].AS_fl[as] := gef_conn[ef].AS_fl_[as] + 
+    for (as = 0; as < gef_conn[ef].num_AS; as++)
+    {
+      /* := eff here is gef_conn[ef].AS_fl[as] := gef_conn[ef].AS_fl_[as] +
        *                                          gef_conn[ef].AS_c[as]
        * where gef_conn[ef].AS_fl_[as] can be lnf expression.
        */
       /* relevance...
        */
-      if ( !gfl_conn[gef_conn[ef].AS_fl[as]].relevant ) {
-	continue;
+      if (!gfl_conn[gef_conn[ef].AS_fl[as]].relevant)
+      {
+        continue;
       }
       /* after this, -infty handling is actually superfluous... or so I'd suppose...
        */
       fl_ = gef_conn[ef].AS_fl_[as];
-      if ( fl_ < 0 ) continue;
-      if ( fl_ == fl ) {
-	get_mneed( gef_conn[ef].AS_fl[as], &minusinfty_, &mneed_ );
-	if ( !minusinfty_ ) {
-	  c++;
-	  val_ = mneed_ - gef_conn[ef].AS_c[as];
-	  if ( c == 1 || val_ > *val ) {
-	    *val = val_;
-	  }
-	}
-	continue;
+      if (fl_ < 0)
+        continue;
+      if (fl_ == fl)
+      {
+        get_mneed(gef_conn[ef].AS_fl[as], &minusinfty_, &mneed_);
+        if (!minusinfty_)
+        {
+          c++;
+          val_ = mneed_ - gef_conn[ef].AS_c[as];
+          if (c == 1 || val_ > *val)
+          {
+            *val = val_;
+          }
+        }
+        continue;
       }
-      if ( !gfl_conn[fl_].artificial ) continue;
-      for ( i = 0; i < gfl_conn[fl_].num_lnf; i++ ) {
-	if ( gfl_conn[fl_].lnf_F[i] == fl ) {
-	  get_mneed( gef_conn[ef].AS_fl[as], &minusinfty_, &mneed_ );
-	  if ( !minusinfty_ ) {
-	    if ( supv( &val_, fl, fl_, mneed_ - gef_conn[ef].AS_c[as] ) ) {
-	      c++;
-	      if ( c == 1 || val_ > *val ) {
-		*val = val_;
-	      }
-	    }
-	    break;
-	  }
-	}
+      if (!gfl_conn[fl_].artificial)
+        continue;
+      for (i = 0; i < gfl_conn[fl_].num_lnf; i++)
+      {
+        if (gfl_conn[fl_].lnf_F[i] == fl)
+        {
+          get_mneed(gef_conn[ef].AS_fl[as], &minusinfty_, &mneed_);
+          if (!minusinfty_)
+          {
+            if (supv(&val_, fl, fl_, mneed_ - gef_conn[ef].AS_c[as]))
+            {
+              c++;
+              if (c == 1 || val_ > *val)
+              {
+                *val = val_;
+              }
+            }
+            break;
+          }
+        }
       }
     }
 
-  }/* end of ef loop */
+  } /* end of ef loop */
 
   /* check through the numerical goals.
    */
-  for ( g = 0; g < gnum_fnumeric_goal; g++ ) {
+  for (g = 0; g < gnum_fnumeric_goal; g++)
+  {
     /* constraint here is gfnumeric_goal_fl[g] >= [>] gfnumeric_goal_c[g]
      * where lh side can be lnf expression.
      */
     fl_ = gfnumeric_goal_fl[g];
-    if ( fl_ < 0 ) continue;
-    if ( fl_ == fl ) {
+    if (fl_ < 0)
+      continue;
+    if (fl_ == fl)
+    {
       c++;
       val_ = gfnumeric_goal_c[g];
-      if ( c == 1 || val_ > *val ) {
-	*val = val_;
+      if (c == 1 || val_ > *val)
+      {
+        *val = val_;
       }
     }
-    if ( !gfl_conn[fl_].artificial ) continue;
-    for ( i = 0; i < gfl_conn[fl_].num_lnf; i++ ) {
-      if ( gfl_conn[fl_].lnf_F[i] == fl ) {
-	if ( supv( &val_, fl, fl_, gfnumeric_goal_c[g] ) ) {
-	  c++;
-	  if ( c == 1 || val_ > *val ) {
-	    *val = val_;
-	  }
-	}
-	break;
+    if (!gfl_conn[fl_].artificial)
+      continue;
+    for (i = 0; i < gfl_conn[fl_].num_lnf; i++)
+    {
+      if (gfl_conn[fl_].lnf_F[i] == fl)
+      {
+        if (supv(&val_, fl, fl_, gfnumeric_goal_c[g]))
+        {
+          c++;
+          if (c == 1 || val_ > *val)
+          {
+            *val = val_;
+          }
+        }
+        break;
       }
     }
   }
 
-  *minusinfty = ( c == 0 ) ? TRUE : FALSE;
+  *minusinfty = (c == 0) ? TRUE : FALSE;
+}
 
-}   
-
-
-
-Bool supv( float *val, int fl, int expr, float c_ )
+Bool supv(float *val, int fl, int expr, float c_)
 
 {
 
@@ -1371,20 +1351,23 @@ Bool supv( float *val, int fl, int expr, float c_ )
 
   *val = c_;
 
-  for ( i = 0; i < gfl_conn[expr].num_lnf; i++ ) {
-    if ( gfl_conn[expr].lnf_F[i] == fl ) {
+  for (i = 0; i < gfl_conn[expr].num_lnf; i++)
+  {
+    if (gfl_conn[expr].lnf_F[i] == fl)
+    {
       pos = i;
       continue;
     }
-    if ( !gmneed_start_D[gfl_conn[expr].lnf_F[i]] ) {
+    if (!gmneed_start_D[gfl_conn[expr].lnf_F[i]])
+    {
       /* this expression contains an undef fluent -->
        * no matter how much we increase fl, it won't help
        * at all.
        */
       return FALSE;
     }
-    *val -= gfl_conn[expr].lnf_C[i] * 
-      gmneed_start_V[gfl_conn[expr].lnf_F[i]];
+    *val -= gfl_conn[expr].lnf_C[i] *
+            gmneed_start_V[gfl_conn[expr].lnf_F[i]];
   }
 
   /* this here is > 0 (hopefully -- yes, checked that)
@@ -1392,91 +1375,50 @@ Bool supv( float *val, int fl, int expr, float c_ )
   *val /= gfl_conn[expr].lnf_C[pos];
 
   return TRUE;
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /**************************************
  * FIRST RELAXED PLAN (1P) EXTRACTION *
  **************************************/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-int extract_1P( int max )
+int extract_1P(int max)
 
 {
 
   static Bool first_call = TRUE;
   int i, max_goal_level, time;
 
-  if ( first_call ) {
-    for ( i = 0; i < gnum_ft_conn; i++ ) {
+  if (first_call)
+  {
+    for (i = 0; i < gnum_ft_conn; i++)
+    {
       gft_conn[i].is_true = INFINITY;
       gft_conn[i].is_goal = FALSE;
       gft_conn[i].ch = FALSE;
     }
-    for ( i = 0; i < gnum_op_conn; i++ ) {
+    for (i = 0; i < gnum_op_conn; i++)
+    {
       gop_conn[i].is_used = INFINITY;
     }
-    for ( i = 0; i < gnum_ef_conn; i++ ) {
+    for (i = 0; i < gnum_ef_conn; i++)
+    {
       gef_conn[i].in_plan = INFINITY;
     }
-    lch_F = ( int * ) calloc( gnum_ft_conn, sizeof( int ) );
+    lch_F = (int *)calloc(gnum_ft_conn, sizeof(int));
     lnum_ch_F = 0;
-    lused_O = ( int * ) calloc( gnum_op_conn, sizeof( int ) );
+    lused_O = (int *)calloc(gnum_op_conn, sizeof(int));
     lnum_used_O = 0;
-    lin_plan_E = ( int * ) calloc( gnum_ef_conn, sizeof( int ) );
+    lin_plan_E = (int *)calloc(gnum_ef_conn, sizeof(int));
     lnum_in_plan_E = 0;
     first_call = FALSE;
   }
 
   reset_search_info();
 
-  max_goal_level = initialize_goals( max );
+  max_goal_level = initialize_goals(max);
 
-  if ( gcmd_line.optimize && goptimization_established ) {
+  if (gcmd_line.optimize && goptimization_established)
+  {
     /* we are optimizing cost;
      * initialize global cost of the relaxed plan.
      */
@@ -1484,17 +1426,15 @@ int extract_1P( int max )
   }
 
   lh = 0;
-  for ( time = max_goal_level; time > 0; time-- ) {
-    achieve_goals( time );
+  for (time = max_goal_level; time > 0; time--)
+  {
+    achieve_goals(time);
   }
 
   return lh;
-
 }
 
-
-
-int initialize_goals( int max )
+int initialize_goals(int max)
 
 {
 
@@ -1505,48 +1445,55 @@ int initialize_goals( int max )
   Comparator comp;
   float val;
 
-  if ( first_call ) {
-    lgoals_at = ( int ** ) calloc( RELAXED_STEPS_DEFAULT, sizeof( int * ) );
-    lnum_goals_at = ( int * ) calloc( RELAXED_STEPS_DEFAULT, sizeof( int ) );
-    lf_goals_c_at = ( float ** ) calloc( RELAXED_STEPS_DEFAULT, sizeof( float * ) );
-    lf_goals_comp_at = ( Comparator ** ) calloc( RELAXED_STEPS_DEFAULT, sizeof( Comparator * ) );
-    for ( i = 0; i < RELAXED_STEPS_DEFAULT; i++ ) {
-      lgoals_at[i] = ( int * ) calloc( gnum_ft_conn, sizeof( int ) );
-      lf_goals_c_at[i] = ( float * ) calloc( gnum_fl_conn, sizeof( float ) );
-      lf_goals_comp_at[i] = ( Comparator * ) calloc( gnum_fl_conn, sizeof( Comparator ) );
+  if (first_call)
+  {
+    lgoals_at = (int **)calloc(RELAXED_STEPS_DEFAULT, sizeof(int *));
+    lnum_goals_at = (int *)calloc(RELAXED_STEPS_DEFAULT, sizeof(int));
+    lf_goals_c_at = (float **)calloc(RELAXED_STEPS_DEFAULT, sizeof(float *));
+    lf_goals_comp_at = (Comparator **)calloc(RELAXED_STEPS_DEFAULT, sizeof(Comparator *));
+    for (i = 0; i < RELAXED_STEPS_DEFAULT; i++)
+    {
+      lgoals_at[i] = (int *)calloc(gnum_ft_conn, sizeof(int));
+      lf_goals_c_at[i] = (float *)calloc(gnum_fl_conn, sizeof(float));
+      lf_goals_comp_at[i] = (Comparator *)calloc(gnum_fl_conn, sizeof(Comparator));
     }
     highest_seen = RELAXED_STEPS_DEFAULT;
 
-    lHcomp = ( Comparator * ) calloc( gnum_fl_conn, sizeof( Comparator ) );
-    lHc = ( float * ) calloc( gnum_fl_conn, sizeof( float ) );
+    lHcomp = (Comparator *)calloc(gnum_fl_conn, sizeof(Comparator));
+    lHc = (float *)calloc(gnum_fl_conn, sizeof(float));
     first_call = FALSE;
   }
 
-  if ( max + 1 > highest_seen ) {
-    for ( i = 0; i < highest_seen; i++ ) {
-      free( lgoals_at[i] );
-      free( lf_goals_c_at[i] );
-      free( lf_goals_comp_at[i] );
+  if (max + 1 > highest_seen)
+  {
+    for (i = 0; i < highest_seen; i++)
+    {
+      free(lgoals_at[i]);
+      free(lf_goals_c_at[i]);
+      free(lf_goals_comp_at[i]);
     }
-    free( lgoals_at );
-    free( lnum_goals_at );
-    free( lf_goals_c_at );
-    free( lf_goals_comp_at );
+    free(lgoals_at);
+    free(lnum_goals_at);
+    free(lf_goals_c_at);
+    free(lf_goals_comp_at);
     highest_seen = max + 10;
-    lgoals_at = ( int ** ) calloc( highest_seen, sizeof( int * ) );
-    lnum_goals_at = ( int * ) calloc( highest_seen, sizeof( int ) );
-    lf_goals_c_at = ( float ** ) calloc( highest_seen, sizeof( float * ) );
-    lf_goals_comp_at = ( Comparator ** ) calloc( highest_seen, sizeof( Comparator * ) );
-    for ( i = 0; i < highest_seen; i++ ) {
-      lgoals_at[i] = ( int * ) calloc( gnum_ft_conn, sizeof( int ) );
-      lf_goals_c_at[i] = ( float * ) calloc( gnum_fl_conn, sizeof( float ) );
-      lf_goals_comp_at[i] = ( Comparator * ) calloc( gnum_fl_conn, sizeof( Comparator ) );
+    lgoals_at = (int **)calloc(highest_seen, sizeof(int *));
+    lnum_goals_at = (int *)calloc(highest_seen, sizeof(int));
+    lf_goals_c_at = (float **)calloc(highest_seen, sizeof(float *));
+    lf_goals_comp_at = (Comparator **)calloc(highest_seen, sizeof(Comparator *));
+    for (i = 0; i < highest_seen; i++)
+    {
+      lgoals_at[i] = (int *)calloc(gnum_ft_conn, sizeof(int));
+      lf_goals_c_at[i] = (float *)calloc(gnum_fl_conn, sizeof(float));
+      lf_goals_comp_at[i] = (Comparator *)calloc(gnum_fl_conn, sizeof(Comparator));
     }
   }
 
-  for ( i = 0; i < max + 1; i++ ) {
+  for (i = 0; i < max + 1; i++)
+  {
     lnum_goals_at[i] = 0;
-    for ( j = 0; j < gnum_fl_conn; j++ ) {
+    for (j = 0; j < gnum_fl_conn; j++)
+    {
       lf_goals_comp_at[i][j] = IGUAL;
       /* probably not necessary; igual...
        */
@@ -1555,35 +1502,44 @@ int initialize_goals( int max )
   }
 
   max_goal_level = 0;
-  for ( i = 0; i < gnum_flogic_goal; i++ ) {
+  for (i = 0; i < gnum_flogic_goal; i++)
+  {
     ft = gflogic_goal[i];
     /* level can't be INFINITY as otherwise 1P wouldn't have
      * been called.
      */
-    if ( gft_conn[ft].level > max_goal_level ) {
+    if (gft_conn[ft].level > max_goal_level)
+    {
       max_goal_level = gft_conn[ft].level;
     }
     lgoals_at[gft_conn[ft].level][lnum_goals_at[gft_conn[ft].level]++] = ft;
     gft_conn[ft].is_goal = TRUE;
-    if ( !gft_conn[ft].ch ) {
+    if (!gft_conn[ft].ch)
+    {
       lch_F[lnum_ch_F++] = ft;
       gft_conn[ft].ch = TRUE;
     }
   }
 
-  for ( i = 0; i < gnum_fnumeric_goal; i++ ) {
+  for (i = 0; i < gnum_fnumeric_goal; i++)
+  {
     fl = gfnumeric_goal_fl[i];
     val = gfnumeric_goal_c[i];
     comp = gfnumeric_goal_comp[i];
-    for ( j = 0; j <= max; j++ ) {
-      if ( !gfl_conn[fl].def[j] ) continue;
-      if ( number_comparison_holds( comp, gfl_conn[fl].level[j], val ) ) break;
+    for (j = 0; j <= max; j++)
+    {
+      if (!gfl_conn[fl].def[j])
+        continue;
+      if (number_comparison_holds(comp, gfl_conn[fl].level[j], val))
+        break;
     }
-    if ( j > max ) {
+    if (j > max)
+    {
       printf("\n\nnumeric goal not reached in 1P??\n\n");
-      exit( 1 );
+      exit(1);
     }
-    if ( j > max_goal_level ) {
+    if (j > max_goal_level)
+    {
       max_goal_level = j;
     }
     lf_goals_c_at[j][fl] = val;
@@ -1591,12 +1547,9 @@ int initialize_goals( int max )
   }
 
   return max_goal_level;
-
 }
 
-
-
-void achieve_goals( int time )
+void achieve_goals(int time)
 
 {
 
@@ -1605,28 +1558,33 @@ void achieve_goals( int time )
 
   /* achieve the goals set at level time >= 1
    */
-  
-  if ( gcmd_line.display_info == 127 ) {
-    printf("\nselecting at step %3d: ", time-1);
+
+  if (gcmd_line.display_info == 127)
+  {
+    printf("\nselecting at step %3d: ", time - 1);
   }
 
   /* before we start, we must translate the artificial goals
    * into real goals.
    */
-  for ( i = gnum_real_fl_conn; i < gnum_fl_conn; i++ ) {
-    if ( lf_goals_comp_at[time][i] == IGUAL ) {
+  for (i = gnum_real_fl_conn; i < gnum_fl_conn; i++)
+  {
+    if (lf_goals_comp_at[time][i] == IGUAL)
+    {
       /* this one isn't needed
        */
       continue;
     }
-    enforce_artificial_goal( i, time );
+    enforce_artificial_goal(i, time);
   }
 
   /* for helpful actions:
    * remember at time 1 what the goals were.
    */
-  if ( time == 1 ) {
-    for ( i = 0; i < gnum_real_fl_conn; i++ ) {
+  if (time == 1)
+  {
+    for (i = 0; i < gnum_real_fl_conn; i++)
+    {
       lHcomp[i] = lf_goals_comp_at[time][i];
       lHc[i] = lf_goals_c_at[time][i];
     }
@@ -1636,79 +1594,95 @@ void achieve_goals( int time )
    * the requirement for each of them can be fulfilled in the previous
    * level.
    */
-  for ( i = 0; i < gnum_real_fl_conn; i++ ) {
-    if ( lf_goals_comp_at[time][i] == IGUAL ) {
+  for (i = 0; i < gnum_real_fl_conn; i++)
+  {
+    if (lf_goals_comp_at[time][i] == IGUAL)
+    {
       continue;
     }
-    if ( gfl_conn[i].def[time-1] &&
-	 number_comparison_holds( lf_goals_comp_at[time][i],
-				  gfl_conn[i].level[time-1],
-				  lf_goals_c_at[time][i] ) ) {
+    if (gfl_conn[i].def[time - 1] &&
+        number_comparison_holds(lf_goals_comp_at[time][i],
+                                gfl_conn[i].level[time - 1],
+                                lf_goals_c_at[time][i]))
+    {
       /* this can be solved one step earlier.
        * propagate it downwards and mark as OK.
        */
-      update_f_goal( i, time-1, lf_goals_comp_at[time][i], lf_goals_c_at[time][i] );
+      update_f_goal(i, time - 1, lf_goals_comp_at[time][i], lf_goals_c_at[time][i]);
       lf_goals_comp_at[time][i] = IGUAL;
       continue;
     }
     /* if there is a good assigner, then take it.
      */
-    for ( j = 0; j < gfl_conn[i].num_AS; j++ ) {
+    for (j = 0; j < gfl_conn[i].num_AS; j++)
+    {
       ef = gfl_conn[i].AS[j];
-      if ( !LESS( gef_conn[ef].level, time ) ) {
-	/* we allow any effect that's already there
-	 */
-	continue;
+      if (!LESS(gef_conn[ef].level, time))
+      {
+        /* we allow any effect that's already there
+         */
+        continue;
       }
-      if ( gfl_conn[i].AS_fl_[j] != -1 &&
-	   !gfl_conn[gfl_conn[i].AS_fl_[j]].def[time-1] ) {
-	/* accesses an undefined value.
-	 */
-	continue;
+      if (gfl_conn[i].AS_fl_[j] != -1 &&
+          !gfl_conn[gfl_conn[i].AS_fl_[j]].def[time - 1])
+      {
+        /* accesses an undefined value.
+         */
+        continue;
       }
-      if ( gfl_conn[i].AS_fl_[j] != -1 ) {
-	val = gfl_conn[gfl_conn[i].AS_fl_[j]].level[time-1] + gfl_conn[i].AS_c[j];
-      } else {
-	val = gfl_conn[i].AS_c[j];
+      if (gfl_conn[i].AS_fl_[j] != -1)
+      {
+        val = gfl_conn[gfl_conn[i].AS_fl_[j]].level[time - 1] + gfl_conn[i].AS_c[j];
       }
-      if ( !number_comparison_holds( lf_goals_comp_at[time][i],
-				     val,
-				     lf_goals_c_at[time][i] ) ) {
-	/* that one is not strong enough.
-	 */
-	continue;
+      else
+      {
+        val = gfl_conn[i].AS_c[j];
+      }
+      if (!number_comparison_holds(lf_goals_comp_at[time][i],
+                                   val,
+                                   lf_goals_c_at[time][i]))
+      {
+        /* that one is not strong enough.
+         */
+        continue;
       }
       break;
     }
-    if ( j < gfl_conn[i].num_AS ) {
+    if (j < gfl_conn[i].num_AS)
+    {
       /* ef is an assigner that is strong enough and already there.
        */
-      if ( gef_conn[ef].in_plan == time - 1 ) {
-	printf("\n\nassigner already selected, nevertheless goal still there\n\n");
-	exit( 1 );
-      } else {
-	if ( gef_conn[ef].in_plan == INFINITY ) {
-	  lin_plan_E[lnum_in_plan_E++] = ef;
-	}
-	gef_conn[ef].in_plan = time - 1;
-	if ( gcmd_line.optimize && goptimization_established ) {
-	  /* we want to execute this effect here, so we gotta live with the cost.
-	   */
-	  gcost += gef_conn[ef].cost;
-	}
+      if (gef_conn[ef].in_plan == time - 1)
+      {
+        printf("\n\nassigner already selected, nevertheless goal still there\n\n");
+        exit(1);
+      }
+      else
+      {
+        if (gef_conn[ef].in_plan == INFINITY)
+        {
+          lin_plan_E[lnum_in_plan_E++] = ef;
+        }
+        gef_conn[ef].in_plan = time - 1;
+        if (gcmd_line.optimize && goptimization_established)
+        {
+          /* we want to execute this effect here, so we gotta live with the cost.
+           */
+          gcost += gef_conn[ef].cost;
+        }
       }
       /* now select the resp. op at this level, if necessary
        */
-      select_op( time, gef_conn[ef].op );
+      select_op(time, gef_conn[ef].op);
       /* now mark the benefits of that effect, introducing
        * also the fl_ level enforcement goals for each effect
        * that is useful for solving a goal at time: in particular,
        * this will be the one we have just selected.
-       */      
-      introduce_benefits_and_enforcements( time, ef );
+       */
+      introduce_benefits_and_enforcements(time, ef);
       /* now introduce the new goals
        */
-      introduce_pc_goals( time, ef );
+      introduce_pc_goals(time, ef);
 
       /* care about next fluent
        */
@@ -1716,92 +1690,105 @@ void achieve_goals( int time )
     }
     /* debug...
      */
-    if ( !gfl_conn[i].def[time-1] ) {
+    if (!gfl_conn[i].def[time - 1])
+    {
       printf("\n\nall assignerss applied yet goal not fulfilled - undefined below.\n\n");
-      exit( 1 );
+      exit(1);
     }
 
-
-
-    /* no good assigner available. thus, push the goal at this level so far 
+    /* no good assigner available. thus, push the goal at this level so far
      * down that its requirement can be fulfilled in the previous level.
      */
-    for ( j = 0; j < gfl_conn[i].num_IN; j++ ) {
+    for (j = 0; j < gfl_conn[i].num_IN; j++)
+    {
       /* go through increasers in constant quantity order top to
        * bottom (see inst_final.c);
        */
       ef = gfl_conn[i].IN[j];
-      if ( !LESS( gef_conn[ef].level, time ) ) {
-	continue;
+      if (!LESS(gef_conn[ef].level, time))
+      {
+        continue;
       }
-      if ( gfl_conn[i].IN_fl_[j] != -1 &&
-	   !gfl_conn[gfl_conn[i].IN_fl_[j]].def[time-1] ) {
-	/* accesses an undefined fluent.
-	 */
-	continue;
+      if (gfl_conn[i].IN_fl_[j] != -1 &&
+          !gfl_conn[gfl_conn[i].IN_fl_[j]].def[time - 1])
+      {
+        /* accesses an undefined fluent.
+         */
+        continue;
       }
-      if ( gfl_conn[i].IN_fl_[j] != -1 ) {
-	val = gfl_conn[gfl_conn[i].IN_fl_[j]].level[time-1] + gfl_conn[i].IN_c[j];
-      } else {
-	val = gfl_conn[i].IN_c[j];
+      if (gfl_conn[i].IN_fl_[j] != -1)
+      {
+        val = gfl_conn[gfl_conn[i].IN_fl_[j]].level[time - 1] + gfl_conn[i].IN_c[j];
       }
-      if ( val <= 0 ) {
-	/* that one does not help us at all.
-	 */
-	continue;
+      else
+      {
+        val = gfl_conn[i].IN_c[j];
+      }
+      if (val <= 0)
+      {
+        /* that one does not help us at all.
+         */
+        continue;
       }
       /* if ef is already selected here, we can not use it anymore;
        * else, record it as selected.
        */
-      if ( gef_conn[ef].in_plan == time - 1 ) {
-	continue;
-      } else {
-	if ( gef_conn[ef].in_plan == INFINITY ) {
-	  lin_plan_E[lnum_in_plan_E++] = ef;
-	}
-	gef_conn[ef].in_plan = time - 1;
-	if ( gcmd_line.optimize && goptimization_established ) {
-	  gcost += gef_conn[ef].cost;
-	}
+      if (gef_conn[ef].in_plan == time - 1)
+      {
+        continue;
+      }
+      else
+      {
+        if (gef_conn[ef].in_plan == INFINITY)
+        {
+          lin_plan_E[lnum_in_plan_E++] = ef;
+        }
+        gef_conn[ef].in_plan = time - 1;
+        if (gcmd_line.optimize && goptimization_established)
+        {
+          gcost += gef_conn[ef].cost;
+        }
       }
       /* do the usual stuff...
        */
-      select_op( time, gef_conn[ef].op );
-      introduce_benefits_and_enforcements( time, ef );
-      introduce_pc_goals( time, ef );
-      /* stop as soon as 
+      select_op(time, gef_conn[ef].op);
+      introduce_benefits_and_enforcements(time, ef);
+      introduce_pc_goals(time, ef);
+      /* stop as soon as
        * goal can be fulfilled one step below.
        */
-      if ( number_comparison_holds( lf_goals_comp_at[time][i],
-				    gfl_conn[i].level[time-1],
-				    lf_goals_c_at[time][i] ) ) {
-	break;
+      if (number_comparison_holds(lf_goals_comp_at[time][i],
+                                  gfl_conn[i].level[time - 1],
+                                  lf_goals_c_at[time][i]))
+      {
+        break;
       }
     }
     /* now propagate the revised goal downward, and say we are finished with
      * this one.
      */
-    update_f_goal( i, time-1, lf_goals_comp_at[time][i], lf_goals_c_at[time][i] );
+    update_f_goal(i, time - 1, lf_goals_comp_at[time][i], lf_goals_c_at[time][i]);
     lf_goals_comp_at[time][i] = IGUAL;
 
     /* debug...
      */
-    if ( !number_comparison_holds( lf_goals_comp_at[time-1][i],
-				   gfl_conn[i].level[time-1],
-				   lf_goals_c_at[time-1][i] ) ) {
+    if (!number_comparison_holds(lf_goals_comp_at[time - 1][i],
+                                 gfl_conn[i].level[time - 1],
+                                 lf_goals_c_at[time - 1][i]))
+    {
       printf("\n\nall increasers applied yet goal not fulfilled.\n\n");
-      exit( 1 );
+      exit(1);
     }
-  }/* fluents at level time */
-
-
+  } /* fluents at level time */
 
   /* now achieve also the remaining logic goals here.
    */
-  for ( i = 0; i < lnum_goals_at[time]; i++ ) {
+  for (i = 0; i < lnum_goals_at[time]; i++)
+  {
     ft = lgoals_at[time][i];
 
-    if ( gft_conn[ft].is_true == time ) {
+    if (gft_conn[ft].is_true == time)
+    {
       /* fact already added by prev now selected op
        */
       continue;
@@ -1809,16 +1796,20 @@ void achieve_goals( int time )
 
     min_p = INFINITY;
     min_e = -1;
-    for ( j = 0; j < gft_conn[ft].num_A; j++ ) {
+    for (j = 0; j < gft_conn[ft].num_A; j++)
+    {
       ef = gft_conn[ft].A[j];
-      if ( gef_conn[ef].level != time - 1 ) continue; 
+      if (gef_conn[ef].level != time - 1)
+        continue;
       p = 0;
-      for ( k = 0; k < gef_conn[ef].num_PC; k++ ) {
-	p += gft_conn[gef_conn[ef].PC[k]].level;
+      for (k = 0; k < gef_conn[ef].num_PC; k++)
+      {
+        p += gft_conn[gef_conn[ef].PC[k]].level;
       }
-      if ( LESS( p, min_p ) ) {
-	min_p = p;
-	min_e = ef;
+      if (LESS(p, min_p))
+      {
+        min_p = p;
+        min_e = ef;
       }
     }
     ef = min_e;
@@ -1829,263 +1820,283 @@ void achieve_goals( int time )
      * is already selected as then the goal is true already.
      * nevermind.
      */
-    if ( gef_conn[ef].in_plan == time - 1 ) {
+    if (gef_conn[ef].in_plan == time - 1)
+    {
       continue;
-    } else {
-      if ( gef_conn[ef].in_plan == INFINITY ) {
-	lin_plan_E[lnum_in_plan_E++] = ef;
+    }
+    else
+    {
+      if (gef_conn[ef].in_plan == INFINITY)
+      {
+        lin_plan_E[lnum_in_plan_E++] = ef;
       }
       gef_conn[ef].in_plan = time - 1;
-      if ( gcmd_line.optimize && goptimization_established ) {
-	gcost += gef_conn[ef].cost;
+      if (gcmd_line.optimize && goptimization_established)
+      {
+        gcost += gef_conn[ef].cost;
       }
     }
-    select_op( time, gef_conn[ef].op );
-    introduce_benefits_and_enforcements( time, ef );
-    introduce_pc_goals( time, ef );
+    select_op(time, gef_conn[ef].op);
+    introduce_benefits_and_enforcements(time, ef);
+    introduce_pc_goals(time, ef);
   }
-
 }
 
-
-
-void enforce_artificial_goal( int fl, int time )
+void enforce_artificial_goal(int fl, int time)
 
 {
 
   int i;
 
-  if ( !gfl_conn[fl].artificial ) {
+  if (!gfl_conn[fl].artificial)
+  {
     printf("\n\ntrying to enforce non-artificial goal\n\n");
-    exit( 1 );
+    exit(1);
   }
 
-  /* for now, we simply require the maximum levels of all 
+  /* for now, we simply require the maximum levels of all
    * composites.
    */
-  for ( i = 0; i < gfl_conn[fl].num_lnf; i++ ) {
-    update_f_goal( gfl_conn[fl].lnf_F[i], time, GEQ,
-		   gfl_conn[gfl_conn[fl].lnf_F[i]].level[time] );
+  for (i = 0; i < gfl_conn[fl].num_lnf; i++)
+  {
+    update_f_goal(gfl_conn[fl].lnf_F[i], time, GEQ,
+                  gfl_conn[gfl_conn[fl].lnf_F[i]].level[time]);
   }
-  
 }
 
-
-
-void select_op( int time, int op )
+void select_op(int time, int op)
 
 {
 
-  if ( gop_conn[op].is_used != time - 1 ) {
+  if (gop_conn[op].is_used != time - 1)
+  {
     /* we don't have this op yet at this level
      * --> count it and record it for setting back info.
      */
-    if ( gop_conn[op].is_used == INFINITY ) {
+    if (gop_conn[op].is_used == INFINITY)
+    {
       lused_O[lnum_used_O++] = op;
     }
     gop_conn[op].is_used = time - 1;
     lh++;
-    if ( gcmd_line.display_info == 127 ) {
+    if (gcmd_line.display_info == 127)
+    {
       printf("\n                       ");
-      print_op_name( op );
+      print_op_name(op);
     }
   }
-
 }
 
-
-
-void introduce_benefits_and_enforcements( int time, int ef )
+void introduce_benefits_and_enforcements(int time, int ef)
 
 {
 
   int k, l, ft, fl;
   float val;
 
-  for ( k = 0; k < gef_conn[ef].num_A; k++ ) {
+  for (k = 0; k < gef_conn[ef].num_A; k++)
+  {
     ft = gef_conn[ef].A[k];
     gft_conn[ft].is_true = time;
-    if ( !gft_conn[ft].ch ) {
+    if (!gft_conn[ft].ch)
+    {
       lch_F[lnum_ch_F++] = ft;
       gft_conn[ft].ch = TRUE;
     }
   }
 
-  for ( k = 0; k < gef_conn[ef].num_AS; k++ ) {
+  for (k = 0; k < gef_conn[ef].num_AS; k++)
+  {
     fl = gef_conn[ef].AS_fl[k];
-    if ( lf_goals_comp_at[time][fl] == IGUAL ) {
+    if (lf_goals_comp_at[time][fl] == IGUAL)
+    {
       continue;
     }
-    if ( !assign_value( ef, time - 1, k, &val ) ) {
+    if (!assign_value(ef, time - 1, k, &val))
+    {
       continue;
     }
-    if ( number_comparison_holds( lf_goals_comp_at[time][fl],
-				  val,
-				  lf_goals_c_at[time][fl] ) ) {
+    if (number_comparison_holds(lf_goals_comp_at[time][fl],
+                                val,
+                                lf_goals_c_at[time][fl]))
+    {
       /* this effect assigns what we wanted there. enforce its
        * dependency fluent fl_
        */
       lf_goals_comp_at[time][fl] = IGUAL;
-      enforce_assign( ef, time - 1, k );
+      enforce_assign(ef, time - 1, k);
     }
   }
-  for ( k = 0; k < gef_conn[ef].num_IN; k++ ) {
+  for (k = 0; k < gef_conn[ef].num_IN; k++)
+  {
     fl = gef_conn[ef].IN_fl[k];
-    if ( lf_goals_comp_at[time][fl] == IGUAL ) {
+    if (lf_goals_comp_at[time][fl] == IGUAL)
+    {
       continue;
     }
-    if ( !increase_value( ef, time - 1, k, &val ) ) {
+    if (!increase_value(ef, time - 1, k, &val))
+    {
       continue;
     }
-    if ( val > 0 ) {
+    if (val > 0)
+    {
       lf_goals_c_at[time][fl] -= val;
-      enforce_increase( ef, time - 1, k );
+      enforce_increase(ef, time - 1, k);
     }
   }
 
-  for ( k = 0; k < gef_conn[ef].num_I; k++ ) {
-    if ( gef_conn[gef_conn[ef].I[k]].in_plan == time - 1 ) {
+  for (k = 0; k < gef_conn[ef].num_I; k++)
+  {
+    if (gef_conn[gef_conn[ef].I[k]].in_plan == time - 1)
+    {
       continue;
-    } else {
-      if ( gef_conn[gef_conn[ef].I[k]].in_plan == INFINITY ) {
-	lin_plan_E[lnum_in_plan_E++] = gef_conn[ef].I[k];
+    }
+    else
+    {
+      if (gef_conn[gef_conn[ef].I[k]].in_plan == INFINITY)
+      {
+        lin_plan_E[lnum_in_plan_E++] = gef_conn[ef].I[k];
       }
       gef_conn[gef_conn[ef].I[k]].in_plan = time - 1;
-      if ( gcmd_line.optimize && goptimization_established ) {
-	gcost += gef_conn[gef_conn[ef].I[k]].cost;
+      if (gcmd_line.optimize && goptimization_established)
+      {
+        gcost += gef_conn[gef_conn[ef].I[k]].cost;
       }
     }
-    for ( l = 0; l < gef_conn[gef_conn[ef].I[k]].num_A; l++ ) {
+    for (l = 0; l < gef_conn[gef_conn[ef].I[k]].num_A; l++)
+    {
       ft = gef_conn[gef_conn[ef].I[k]].A[l];
       gft_conn[ft].is_true = time;
-      if ( !gft_conn[ft].ch ) {
-	lch_F[lnum_ch_F++] = ft;
-	gft_conn[ft].ch = TRUE;
+      if (!gft_conn[ft].ch)
+      {
+        lch_F[lnum_ch_F++] = ft;
+        gft_conn[ft].ch = TRUE;
       }
     }
-    for ( l = 0; l < gef_conn[gef_conn[ef].I[k]].num_AS; l++ ) {
+    for (l = 0; l < gef_conn[gef_conn[ef].I[k]].num_AS; l++)
+    {
       fl = gef_conn[gef_conn[ef].I[k]].AS_fl[l];
-      if ( lf_goals_comp_at[time][fl] == IGUAL ) {
-	continue;
+      if (lf_goals_comp_at[time][fl] == IGUAL)
+      {
+        continue;
       }
-      if ( !assign_value( gef_conn[ef].I[k], time - 1, l, &val ) ) {
-	continue;
+      if (!assign_value(gef_conn[ef].I[k], time - 1, l, &val))
+      {
+        continue;
       }
-      if ( number_comparison_holds( lf_goals_comp_at[time][fl],
-				    val,
-				    lf_goals_c_at[time][fl] ) ) {
-	lf_goals_comp_at[time][fl] = IGUAL;
-	enforce_assign( gef_conn[ef].I[k], time - 1, l );
+      if (number_comparison_holds(lf_goals_comp_at[time][fl],
+                                  val,
+                                  lf_goals_c_at[time][fl]))
+      {
+        lf_goals_comp_at[time][fl] = IGUAL;
+        enforce_assign(gef_conn[ef].I[k], time - 1, l);
       }
     }
-    for ( l = 0; l < gef_conn[gef_conn[ef].I[k]].num_IN; l++ ) {
+    for (l = 0; l < gef_conn[gef_conn[ef].I[k]].num_IN; l++)
+    {
       fl = gef_conn[gef_conn[ef].I[k]].IN_fl[l];
-      if ( lf_goals_comp_at[time][fl] == IGUAL ) {
-	continue;
+      if (lf_goals_comp_at[time][fl] == IGUAL)
+      {
+        continue;
       }
-      if ( !increase_value( gef_conn[ef].I[k], time - 1, l, &val ) ) {
-	continue;
+      if (!increase_value(gef_conn[ef].I[k], time - 1, l, &val))
+      {
+        continue;
       }
-      if ( val > 0 ) {
-	lf_goals_c_at[time][fl] -= val;
-	enforce_increase( gef_conn[ef].I[k], time - 1, l );
+      if (val > 0)
+      {
+        lf_goals_c_at[time][fl] -= val;
+        enforce_increase(gef_conn[ef].I[k], time - 1, l);
       }
     }
-  }/* implied effects */
-
+  } /* implied effects */
 }
 
-
-
-Bool assign_value( int ef, int at_time, int nr, float *val )
+Bool assign_value(int ef, int at_time, int nr, float *val)
 
 {
 
-  if ( gef_conn[ef].AS_fl_[nr] == -1 ) {
+  if (gef_conn[ef].AS_fl_[nr] == -1)
+  {
     /* no dependency.
      */
     *val = gef_conn[ef].AS_c[nr];
     return TRUE;
   }
 
-  if ( !gfl_conn[gef_conn[ef].AS_fl_[nr]].def[at_time] ) {
+  if (!gfl_conn[gef_conn[ef].AS_fl_[nr]].def[at_time])
+  {
     return FALSE;
   }
-  
+
   *val = gfl_conn[gef_conn[ef].AS_fl_[nr]].level[at_time] + gef_conn[ef].AS_c[nr];
   return TRUE;
-
 }
 
-
-
-Bool increase_value( int ef, int at_time, int nr, float *val )
+Bool increase_value(int ef, int at_time, int nr, float *val)
 
 {
 
-  if ( gef_conn[ef].IN_fl_[nr] == -1 ) {
+  if (gef_conn[ef].IN_fl_[nr] == -1)
+  {
     /* no dependency.
      */
     *val = gef_conn[ef].IN_c[nr];
     return TRUE;
   }
 
-  if ( !gfl_conn[gef_conn[ef].IN_fl_[nr]].def[at_time] ) {
+  if (!gfl_conn[gef_conn[ef].IN_fl_[nr]].def[at_time])
+  {
     return FALSE;
   }
-  
+
   *val = gfl_conn[gef_conn[ef].IN_fl_[nr]].level[at_time] + gef_conn[ef].IN_c[nr];
   return TRUE;
-
 }
 
-
-
-void enforce_assign( int ef, int at_time, int nr )
+void enforce_assign(int ef, int at_time, int nr)
 
 {
 
-  if ( gef_conn[ef].AS_fl_[nr] == -1 ) {
+  if (gef_conn[ef].AS_fl_[nr] == -1)
+  {
     return;
   }
 
-  if ( !gfl_conn[gef_conn[ef].AS_fl_[nr]].def[at_time] ) {
+  if (!gfl_conn[gef_conn[ef].AS_fl_[nr]].def[at_time])
+  {
     printf("\n\ntrying to enforce an undefined value.\n\n");
-    exit( 1 );
+    exit(1);
   }
 
   /* for now, simply require the maximum benefit of the effect.
    */
-  update_f_goal( gef_conn[ef].AS_fl_[nr], at_time, GEQ,
-		 gfl_conn[gef_conn[ef].AS_fl_[nr]].level[at_time] );
-
+  update_f_goal(gef_conn[ef].AS_fl_[nr], at_time, GEQ,
+                gfl_conn[gef_conn[ef].AS_fl_[nr]].level[at_time]);
 }
 
-
-
-void enforce_increase( int ef, int at_time, int nr )
+void enforce_increase(int ef, int at_time, int nr)
 
 {
 
-  if ( gef_conn[ef].IN_fl_[nr] == -1 ) {
+  if (gef_conn[ef].IN_fl_[nr] == -1)
+  {
     return;
   }
 
-  if ( !gfl_conn[gef_conn[ef].IN_fl_[nr]].def[at_time] ) {
+  if (!gfl_conn[gef_conn[ef].IN_fl_[nr]].def[at_time])
+  {
     printf("\n\ntrying to enforce an undefined value.\n\n");
-    exit( 1 );
+    exit(1);
   }
 
   /* for now, simply require the maximum benefit of the effect.
    */
-  update_f_goal( gef_conn[ef].IN_fl_[nr], at_time, GEQ,
-		 gfl_conn[gef_conn[ef].IN_fl_[nr]].level[at_time] );
-
+  update_f_goal(gef_conn[ef].IN_fl_[nr], at_time, GEQ,
+                gfl_conn[gef_conn[ef].IN_fl_[nr]].level[at_time]);
 }
 
-
-
-void introduce_pc_goals( int time, int ef )
+void introduce_pc_goals(int time, int ef)
 
 {
 
@@ -2095,98 +2106,103 @@ void introduce_pc_goals( int time, int ef )
 
   /* now introduce the new goals
    */
-  for ( k = 0; k < gef_conn[ef].num_PC; k++ ) {
+  for (k = 0; k < gef_conn[ef].num_PC; k++)
+  {
     ft = gef_conn[ef].PC[k];
-    if ( gft_conn[ft].is_goal ) {
+    if (gft_conn[ft].is_goal)
+    {
       /* this fact already is a goal
        */
       continue;
     }
     lgoals_at[gft_conn[ft].level][lnum_goals_at[gft_conn[ft].level]++] = ft;
     gft_conn[ft].is_goal = TRUE;
-    if ( !gft_conn[ft].ch ) {
+    if (!gft_conn[ft].ch)
+    {
       lch_F[lnum_ch_F++] = ft;
       gft_conn[ft].ch = TRUE;
     }
   }
   /* now for the numeric precs.
    */
-  for ( k = 0; k < gef_conn[ef].num_f_PC; k++ ) {
+  for (k = 0; k < gef_conn[ef].num_f_PC; k++)
+  {
     fl = gef_conn[ef].f_PC_fl[k];
     val = gef_conn[ef].f_PC_c[k];
     comp = gef_conn[ef].f_PC_comp[k];
     /* determine the first level where prec can be fulfilled.
      */
-    for ( l = 0; l < time; l++ ) {
-      if ( !gfl_conn[fl].def[l] ) continue;
-      if ( number_comparison_holds( comp, gfl_conn[fl].level[l], val ) ) break;
+    for (l = 0; l < time; l++)
+    {
+      if (!gfl_conn[fl].def[l])
+        continue;
+      if (number_comparison_holds(comp, gfl_conn[fl].level[l], val))
+        break;
     }
-    if ( l >= time ) {
+    if (l >= time)
+    {
       printf("\n\nnumeric prec not reached in 1P??\n\n");
-      exit( 1 );
+      exit(1);
     }
     /* if new requirement is stronger than old, then insert it.
      */
-    update_f_goal( fl, l, comp, val );
+    update_f_goal(fl, l, comp, val);
   }
-
 }
 
-
-
-void update_f_goal( int fl, int time, Comparator comp, float val )
+void update_f_goal(int fl, int time, Comparator comp, float val)
 
 {
 
-  if ( lf_goals_comp_at[time][fl] == IGUAL ) {
+  if (lf_goals_comp_at[time][fl] == IGUAL)
+  {
     lf_goals_comp_at[time][fl] = comp;
     lf_goals_c_at[time][fl] = val;
     return;
   }
 
-  if ( lf_goals_c_at[time][fl] < val ) {
+  if (lf_goals_c_at[time][fl] < val)
+  {
     lf_goals_comp_at[time][fl] = comp;
     lf_goals_c_at[time][fl] = val;
     return;
   }
 
-  if ( lf_goals_c_at[time][fl] == val &&
-       comp == GE ) {
+  if (lf_goals_c_at[time][fl] == val &&
+      comp == GE)
+  {
     lf_goals_comp_at[time][fl] = GE;
   }
-   
 }
 
-
-
-void reset_search_info( void )
+void reset_search_info(void)
 
 {
 
   int i;
 
-  for ( i = 0; i < lnum_ch_F; i++ ) {
+  for (i = 0; i < lnum_ch_F; i++)
+  {
     gft_conn[lch_F[i]].is_true = INFINITY;
     gft_conn[lch_F[i]].is_goal = FALSE;
     gft_conn[lch_F[i]].ch = FALSE;
   }
   lnum_ch_F = 0;
 
-  for ( i = 0; i < lnum_used_O; i++ ) {
+  for (i = 0; i < lnum_used_O; i++)
+  {
     gop_conn[lused_O[i]].is_used = INFINITY;
   }
   lnum_used_O = 0;
-  
-  for ( i = 0; i < lnum_in_plan_E; i++ ) {
+
+  for (i = 0; i < lnum_in_plan_E; i++)
+  {
     gef_conn[lin_plan_E[i]].in_plan = INFINITY;
   }
   lnum_in_plan_E = 0;
-
 }
 
-
-
-void collect_H_info( void )
+void collect_H_info(void)
 
 {
 
@@ -2195,31 +2211,37 @@ void collect_H_info( void )
   int i, j, ft, ef, op;
   float val;
 
-  if ( first_call ) {
-    gH = ( int * ) calloc( gnum_op_conn, sizeof( int ) );
+  if (first_call)
+  {
+    gH = (int *)calloc(gnum_op_conn, sizeof(int));
     gnum_H = 0;
     first_call = FALSE;
   }
 
-  for ( i = 0; i < gnum_H; i++ ) {
+  for (i = 0; i < gnum_H; i++)
+  {
     gop_conn[gH[i]].is_in_H = FALSE;
   }
 
   /* first the logical guys
    */
   gnum_H = 0;
-  for ( i = lnum_goals_at[1] - 1; i >= 0; i-- ) {
+  for (i = lnum_goals_at[1] - 1; i >= 0; i--)
+  {
     ft = lgoals_at[1][i];
 
-    for ( j = 0; j < gft_conn[ft].num_A; j++ ) {
+    for (j = 0; j < gft_conn[ft].num_A; j++)
+    {
       ef = gft_conn[ft].A[j];
-      if ( gef_conn[ef].level != 0 ) {
-	continue;
+      if (gef_conn[ef].level != 0)
+      {
+        continue;
       }
       op = gef_conn[ef].op;
 
-      if ( gop_conn[op].is_in_H ) {
-	continue;
+      if (gop_conn[op].is_in_H)
+      {
+        continue;
       }
       gop_conn[op].is_in_H = TRUE;
       gH[gnum_H++] = op;
@@ -2228,53 +2250,66 @@ void collect_H_info( void )
 
   /* then the numerical ones.
    */
-  for ( i = 0; i < gnum_real_fl_conn; i++ ) {
-    if ( lHcomp[i] == IGUAL ) {
+  for (i = 0; i < gnum_real_fl_conn; i++)
+  {
+    if (lHcomp[i] == IGUAL)
+    {
       /* don't need this one at all.
        */
       continue;
     }
-    if ( gfl_conn[i].def[0] &&
-	 number_comparison_holds( lHcomp[i], gfl_conn[i].level[0], lHc[i] ) ) {
+    if (gfl_conn[i].def[0] &&
+        number_comparison_holds(lHcomp[i], gfl_conn[i].level[0], lHc[i]))
+    {
       /* this one's already ok initially... was only pushed down
        * through RPG.
        */
       continue;
     }
-				  
+
     /* assigners
      */
-    for ( j = 0; j < gfl_conn[i].num_AS; j++ ) {
+    for (j = 0; j < gfl_conn[i].num_AS; j++)
+    {
       ef = gfl_conn[i].AS[j];
       op = gef_conn[ef].op;
-      if ( gop_conn[op].is_in_H ) {
-	continue;
+      if (gop_conn[op].is_in_H)
+      {
+        continue;
       }
 
-      if ( gef_conn[ef].level != 0 ) {
-	continue;
+      if (gef_conn[ef].level != 0)
+      {
+        continue;
       }
-      if ( gef_conn[ef].illegal ) {
-	continue;
+      if (gef_conn[ef].illegal)
+      {
+        continue;
       }
-      if ( gfl_conn[i].AS_fl_[j] != -1 &&
-	   !gfl_conn[gfl_conn[i].AS_fl_[j]].def[0] ) {
-	continue;
+      if (gfl_conn[i].AS_fl_[j] != -1 &&
+          !gfl_conn[gfl_conn[i].AS_fl_[j]].def[0])
+      {
+        continue;
       }
-      if ( gfl_conn[i].AS_fl_[j] == -1 ) {
-	val = gfl_conn[i].AS_c[j];
-      } else {
-	val = gfl_conn[gfl_conn[i].AS_fl_[j]].level[0] + gfl_conn[i].AS_c[j];
+      if (gfl_conn[i].AS_fl_[j] == -1)
+      {
+        val = gfl_conn[i].AS_c[j];
       }
-      if ( !number_comparison_holds( lHcomp[i], val, lHc[i] ) ) {
-	continue;
+      else
+      {
+        val = gfl_conn[gfl_conn[i].AS_fl_[j]].level[0] + gfl_conn[i].AS_c[j];
+      }
+      if (!number_comparison_holds(lHcomp[i], val, lHc[i]))
+      {
+        continue;
       }
 
       gop_conn[op].is_in_H = TRUE;
       gH[gnum_H++] = op;
     }
 
-    if ( !gfl_conn[i].def[0] ) {
+    if (!gfl_conn[i].def[0])
+    {
       /* gotta be assigned.
        */
       continue;
@@ -2282,30 +2317,39 @@ void collect_H_info( void )
 
     /* increasers
      */
-    for ( j = 0; j < gfl_conn[i].num_IN; j++ ) {
+    for (j = 0; j < gfl_conn[i].num_IN; j++)
+    {
       ef = gfl_conn[i].IN[j];
       op = gef_conn[ef].op;
-      if ( gop_conn[op].is_in_H ) {
-	continue;
+      if (gop_conn[op].is_in_H)
+      {
+        continue;
       }
 
-      if ( gef_conn[ef].level != 0 ) {
-	continue;
+      if (gef_conn[ef].level != 0)
+      {
+        continue;
       }
-      if ( gef_conn[ef].illegal ) {
-	continue;
+      if (gef_conn[ef].illegal)
+      {
+        continue;
       }
-      if ( gfl_conn[i].IN_fl_[j] != -1 &&
-	   !gfl_conn[gfl_conn[i].IN_fl_[j]].def[0] ) {
-	continue;
+      if (gfl_conn[i].IN_fl_[j] != -1 &&
+          !gfl_conn[gfl_conn[i].IN_fl_[j]].def[0])
+      {
+        continue;
       }
-      if ( gfl_conn[i].IN_fl_[j] == -1 ) {
-	val = gfl_conn[i].IN_c[j];
-      } else {
-	val = gfl_conn[gfl_conn[i].IN_fl_[j]].level[0] + gfl_conn[i].IN_c[j];
+      if (gfl_conn[i].IN_fl_[j] == -1)
+      {
+        val = gfl_conn[i].IN_c[j];
       }
-      if ( val <= 0 ) {
-	continue;
+      else
+      {
+        val = gfl_conn[gfl_conn[i].IN_fl_[j]].level[0] + gfl_conn[i].IN_c[j];
+      }
+      if (val <= 0)
+      {
+        continue;
       }
 
       gop_conn[op].is_in_H = TRUE;
@@ -2313,12 +2357,13 @@ void collect_H_info( void )
     }
   }
 
-  if ( gcmd_line.display_info == 128 ) {
+  if (gcmd_line.display_info == 128)
+  {
     printf("\ncollected H: ");
-    for ( i = 0; i < gnum_H; i++ ) {
-      print_op_name( gH[i] );
+    for (i = 0; i < gnum_H; i++)
+    {
+      print_op_name(gH[i]);
       printf("\n              ");
     }
   }
-
 }
