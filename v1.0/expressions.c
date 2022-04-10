@@ -485,9 +485,9 @@ void print_lnf_representation( void )
 
 Comparator lcomp;
 
-int lF[MAX_LNF_F];
+extern int lF[MAX_LNF_F];
 float lC[MAX_LNF_F];
-int lnum_F;
+extern int lnum_F;
 
 float lc;
 

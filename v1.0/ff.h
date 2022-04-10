@@ -67,11 +67,9 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <ctype.h>
-#include <sys/types.h>
-#include <sys/timeb.h>
-#include <sys/times.h>
+#include "times.h"
 
 
 
